@@ -136,7 +136,7 @@ export class EngineServicesClient {
       const formData = new FormData();
       formData.append('file', file);
       versionTag && formData.append('versionTag', versionTag);
-      return await this.#requestApi<ItemFolder>(
+      await this.#requestApi<ItemFolder>(
         'POST',
         `${ITEM_PATH}/${fileId}/version`,
         {
