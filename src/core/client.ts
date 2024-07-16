@@ -1,10 +1,15 @@
 import axios, { Method } from 'axios';
-import { ItemFolder } from '../types/items';
+import {
+  ComponentItem,
+  ComponentProps,
+  Item,
+  ItemFolder,
+} from '../types/items';
 
 const FOLDER_PATH = 'item/folder';
 const ITEM_PATH = 'item';
 const ITEM_TYPE_FILE = 'FILE';
-const ITEM_TYPE_TOOL = 'TOOL';
+const ITEM_TYPE_COMPONENT = 'TOOL';
 
 export class EngineServicesClient {
   apiUrl: string;
@@ -95,13 +100,13 @@ export class EngineServicesClient {
         { query: { itemType: ITEM_TYPE_FILE } },
       );
     }
-    return await this.#requestApi<ItemFolder[]>('GET', `${ITEM_PATH}`, {
+    return await this.#requestApi<Item[]>('GET', `${ITEM_PATH}`, {
       query: { itemType: ITEM_TYPE_FILE },
     });
   }
 
   async getFile(fileId: string) {
-    return await this.#requestApi<ItemFolder>('GET', `${ITEM_PATH}/${fileId}`);
+    return await this.#requestApi<Item>('GET', `${ITEM_PATH}/${fileId}`);
   }
 
   async createFile(fileData: {
@@ -117,7 +122,7 @@ export class EngineServicesClient {
     formData.append('versionTag', versionTag);
     parentFolderId && formData.append('parentFolderId', parentFolderId);
 
-    return await this.#requestApi<ItemFolder>('POST', ITEM_PATH, {
+    return await this.#requestApi<Item>('POST', ITEM_PATH, {
       body: formData,
     });
   }
@@ -136,72 +141,93 @@ export class EngineServicesClient {
       const formData = new FormData();
       formData.append('file', file);
       versionTag && formData.append('versionTag', versionTag);
-      await this.#requestApi<ItemFolder>(
-        'POST',
-        `${ITEM_PATH}/${fileId}/version`,
-        {
-          body: formData,
-        },
-      );
+      await this.#requestApi<Item>('POST', `${ITEM_PATH}/${fileId}/version`, {
+        body: formData,
+      });
     }
-    return await this.#requestApi<ItemFolder>('PUT', `${ITEM_PATH}/${fileId}`, {
+    return await this.#requestApi<Item>('PUT', `${ITEM_PATH}/${fileId}`, {
       body: { name, versionTag, parentFolderId },
     });
   }
 
   async archiveFile(fileId: string) {
-    return await this.#requestApi<ItemFolder>(
-      'DELETE',
-      `${ITEM_PATH}/${fileId}`,
-    );
+    return await this.#requestApi<Item>('DELETE', `${ITEM_PATH}/${fileId}`);
   }
 
-  async listTools(folderId?: string) {
+  async listComponents(folderId?: string) {
     if (folderId) {
       return await this.#requestApi<ItemFolder[]>(
         'GET',
         `${ITEM_PATH}/${folderId}/items`,
-        { query: { itemType: ITEM_TYPE_TOOL } },
+        { query: { itemType: ITEM_TYPE_COMPONENT } },
       );
     }
-    return await this.#requestApi<ItemFolder[]>('GET', `${ITEM_PATH}`, {
-      query: { itemType: ITEM_TYPE_TOOL },
+    return await this.#requestApi<ComponentItem[]>('GET', `${ITEM_PATH}`, {
+      query: { itemType: ITEM_TYPE_COMPONENT },
     });
   }
 
-  async getTool(toolId: string) {
-    return await this.#requestApi<ItemFolder>('GET', `${ITEM_PATH}/${toolId}`);
+  async getComponent(componentId: string) {
+    return await this.#requestApi<ComponentItem>(
+      'GET',
+      `${ITEM_PATH}/${componentId}`,
+    );
   }
 
-  async createTool(toolData: {
+  async createComponent(componentData: {
     name: string;
     versionTag: string;
     parentFolderId?: string;
+    componentInfo: ComponentProps;
   }) {
-    const { name, versionTag, parentFolderId } = toolData;
-    return await this.#requestApi<ItemFolder>('POST', ITEM_PATH, {
-      body: { name, versionTag, parentFolderId },
+    const { name, versionTag, parentFolderId, componentInfo } = componentData;
+    return await this.#requestApi<ComponentItem>('POST', ITEM_PATH, {
+      body: {
+        name,
+        versionTag,
+        parentFolderId,
+        extraProps: componentInfo,
+      },
     });
   }
 
-  async updateTool(
-    toolId: string,
-    toolData: {
+  async updateComponent(
+    componentId: string,
+    componentData: {
+      file?: File;
       name?: string;
       parentFolderId?: string;
       versionTag?: string;
+      componentInfo?: ComponentProps;
     },
   ) {
-    const { name, versionTag, parentFolderId } = toolData;
-    return await this.#requestApi<ItemFolder>('PUT', `${ITEM_PATH}/${toolId}`, {
-      body: { name, versionTag, parentFolderId },
-    });
+    const { name, versionTag, parentFolderId, componentInfo, file } =
+      componentData;
+    if (file) {
+      const formData = new FormData();
+      formData.append('file', file);
+      versionTag && formData.append('versionTag', versionTag);
+      await this.#requestApi<Item>(
+        'POST',
+        `${ITEM_PATH}/${componentId}/version`,
+        {
+          body: formData,
+        },
+      );
+    }
+    return await this.#requestApi<ComponentItem>(
+      'PUT',
+      `${ITEM_PATH}/${componentId}`,
+      {
+        body: { name, versionTag, parentFolderId, componentInfo },
+      },
+    );
   }
 
-  async archiveTool(toolId: string) {
-    return await this.#requestApi<ItemFolder>(
+  async archiveComponent(componentId: string) {
+    return await this.#requestApi<ComponentItem>(
       'DELETE',
-      `${ITEM_PATH}/${toolId}`,
+      `${ITEM_PATH}/${componentId}`,
     );
   }
 }

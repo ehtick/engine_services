@@ -34,11 +34,14 @@ export type AppProps = {
 
 export type AppItem = Item & { itemType: 'APP'; extraProps: AppProps };
 
-export type ToolProps = {
+export type ComponentProps = {
   isPublic?: boolean;
   isOpenSource?: AppSource;
   price?: number;
-  toolId: string;
+  componentId: string;
 };
 
-export type ToolItem = Item & { itemType: 'TOOL'; extraProps: ToolProps };
+export type ComponentItem = Item & {
+  itemType: 'TOOL';
+  extraProps: ComponentProps;
+};
