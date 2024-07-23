@@ -15,14 +15,8 @@ export class EngineServicesClient {
   apiUrl: string;
   accessToken: string;
 
-  constructor(accessToken: string, apiUrl?: string) {
-    const defaultApiUrl = process.env.DEFAULT_API_URL as string;
-    if (!apiUrl && !defaultApiUrl) {
-      throw new Error(
-        'No API URL provided and no default API URL set in environment variables',
-      );
-    }
-    let url = apiUrl || defaultApiUrl;
+  constructor(accessToken: string, apiUrl: string) {
+    let url = apiUrl;
     if (url.charAt(url.length - 1) === '/') {
       url = url.slice(0, -1);
     }
