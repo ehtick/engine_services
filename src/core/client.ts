@@ -22,25 +22,20 @@ export type CreateItemProps = {
   parentFolderId?: string;
 };
 
-export type UpdateItemProps =
-  | {
-      name?: string;
-      parentFolderId: string;
-      file?: File;
-      versionTag?: string;
-    }
-  | {
-      name: string;
-      parentFolderId?: string;
-      file?: File;
-      versionTag?: string;
-    }
-  | {
-      name?: string;
-      parentFolderId?: string;
-      file: File;
-      versionTag: string;
-    };
+export type UpdateItemProps = {
+  name?: string;
+  parentFolderId?: string;
+  file?: File;
+  versionTag?: string;
+};
+
+export type CreateComponentProps = CreateItemProps & {
+  componentProps: ComponentProps;
+};
+
+export type UpdateComponentProps = UpdateItemProps & {
+  componentProps: ComponentProps;
+};
 
 export class EngineServicesClient {
   apiUrl: string;
@@ -161,11 +156,7 @@ export class EngineServicesClient {
     formData.append('itemType', itemType);
     parentFolderId && formData.append('folderId', parentFolderId);
 
-    extraProps &&
-      Object.entries(extraProps).forEach(
-        ([key, value]) => Boolean(value) && formData.append(key, value),
-      );
-
+    extraProps && formData.append('extraProps', JSON.stringify(extraProps));
     return await this.#requestApi<CreateItemResponse<T>>('POST', ITEM_PATH, {
       body: formData,
     });
@@ -194,9 +185,9 @@ export class EngineServicesClient {
     }
     if (name || parentFolderId || extraProps) {
       const body: UpdateItemDto = {
-        name,
-        folderId: parentFolderId,
-        ...extraProps,
+        ...(name && { name }),
+        ...(parentFolderId && { folderId: parentFolderId }),
+        ...(extraProps && { extraProps }),
       };
 
       item = await this.#requestApi<T>('PUT', `${ITEM_PATH}/${itemId}`, {
@@ -244,33 +235,32 @@ export class EngineServicesClient {
 
   /**
    * Create a new component.
-   * @function
-   * @deprecated This function is still under development and should not be used in production.
+   * @functionß
    */
 
-  async createComponent(fileData: CreateItemProps, extraProps: ComponentProps) {
+  async createComponent(componentData: CreateComponentProps) {
+    const { componentProps } = componentData;
     return await this.#createItem<ComponentItem, ComponentProps>(
-      fileData,
+      componentData,
       ITEM_TYPE_COMPONENT,
-      extraProps,
+      componentProps,
     );
   }
 
   /**
    * Update a component.
    * @function
-   * @deprecated This function is still under development and should not be used in production.
    */
 
   async updateComponent(
     fileId: string,
-    fileData: UpdateItemProps,
-    extraProps: ComponentProps,
+    componentData: UpdateComponentProps,
   ): Promise<UpdateItemResponse> {
+    const { componentProps } = componentData;
     return await this.#updateItem<ComponentItem, ComponentProps>(
       fileId,
-      fileData,
-      extraProps,
+      componentData,
+      componentProps,
     );
   }
 
