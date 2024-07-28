@@ -1,16 +1,46 @@
 import axios, { Method } from 'axios';
+import { UpdateItemDto, UpdateItemFolderDto } from '../types/item.dto';
 import {
   ComponentItem,
   ComponentProps,
   Item,
   ItemFolder,
+  ItemType,
+  ItemVersion,
 } from '../types/items';
-import { UpdateItemDto, UpdateItemFolderDto } from '../types/item.dto';
+import { CreateItemResponse, UpdateItemResponse } from '../types/response';
 
 const FOLDER_PATH = 'item/folder';
 const ITEM_PATH = 'item';
 const ITEM_TYPE_FILE = 'FILE';
 const ITEM_TYPE_COMPONENT = 'TOOL';
+
+export type CreateItemProps = {
+  file: File;
+  name: string;
+  versionTag: string;
+  parentFolderId?: string;
+};
+
+export type UpdateItemProps =
+  | {
+      name?: string;
+      parentFolderId: string;
+      file?: File;
+      versionTag?: string;
+    }
+  | {
+      name: string;
+      parentFolderId?: string;
+      file?: File;
+      versionTag?: string;
+    }
+  | {
+      name?: string;
+      parentFolderId?: string;
+      file: File;
+      versionTag: string;
+    };
 
 export class EngineServicesClient {
   apiUrl: string;
@@ -47,9 +77,10 @@ export class EngineServicesClient {
     return response.data as T;
   }
 
-  async listFolders(parentFolderId?: string) {
+  async listFolders(params: { parentFolderId?: string; archived?: boolean }) {
+    const { archived, parentFolderId } = params;
     return await this.#requestApi<ItemFolder[]>('GET', FOLDER_PATH, {
-      query: parentFolderId,
+      query: { parentFolderId, archived },
     });
   }
 
@@ -61,22 +92,19 @@ export class EngineServicesClient {
   }
 
   // TODO allow nested folders
-  async createFolder(name: string, parentFolderId?: string) {
+  async createFolder(name: string) {
     return await this.#requestApi<ItemFolder>('POST', FOLDER_PATH, {
-      body: { name, parentFolderId },
+      body: { name },
     });
   }
 
-  async updateFolder(
-    folderId: string,
-    updateFolderParams: { name?: string; parentFolderId?: string },
-  ) {
-    const { name, parentFolderId } = updateFolderParams;
+  async updateFolder(folderId: string, updateFolderParams: { name?: string }) {
+    const { name } = updateFolderParams;
     return await this.#requestApi<ItemFolder>(
       'PUT',
       `${FOLDER_PATH}/${folderId}`,
       {
-        body: { name, parentFolderId } as UpdateItemFolderDto,
+        body: { name } as UpdateItemFolderDto,
       },
     );
   }
@@ -88,16 +116,31 @@ export class EngineServicesClient {
     );
   }
 
-  async listFiles(folderId?: string) {
+  async recoverFolder(folderId: string) {
+    return await this.#requestApi<ItemFolder>(
+      'PUT',
+      `${FOLDER_PATH}/${folderId}/recover`,
+    );
+  }
+
+  async recoverFile(fileId: string) {
+    return await this.#requestApi<ItemFolder>(
+      'PUT',
+      `${ITEM_PATH}/${fileId}/recover`,
+    );
+  }
+
+  async listFiles(filters?: { folderId?: string; archived?: boolean }) {
+    const { folderId, archived } = filters || {};
     if (folderId) {
       return await this.#requestApi<ItemFolder[]>(
         'GET',
-        `${ITEM_PATH}/${folderId}/items`,
-        { query: { itemType: ITEM_TYPE_FILE } },
+        `${FOLDER_PATH}/${folderId}/items`,
+        { query: { itemType: ITEM_TYPE_FILE, archived } },
       );
     }
     return await this.#requestApi<Item[]>('GET', `${ITEM_PATH}`, {
-      query: { itemType: ITEM_TYPE_FILE },
+      query: { itemType: ITEM_TYPE_FILE, archived },
     });
   }
 
@@ -105,46 +148,74 @@ export class EngineServicesClient {
     return await this.#requestApi<Item>('GET', `${ITEM_PATH}/${fileId}`);
   }
 
-  async createFile(fileData: {
-    file: File;
-    name: string;
-    versionTag: string;
-    parentFolderId?: string;
-  }) {
+  async #createItem<T = Item, P extends Object = {}>(
+    fileData: CreateItemProps,
+    itemType: ItemType,
+    extraProps?: P,
+  ) {
     const { name, versionTag, parentFolderId, file } = fileData;
     const formData = new FormData();
     formData.append('file', file);
     formData.append('name', name);
     formData.append('versionTag', versionTag);
+    formData.append('itemType', itemType);
     parentFolderId && formData.append('folderId', parentFolderId);
 
-    return await this.#requestApi<Item>('POST', ITEM_PATH, {
+    extraProps &&
+      Object.entries(extraProps).forEach(
+        ([key, value]) => Boolean(value) && formData.append(key, value),
+      );
+
+    return await this.#requestApi<CreateItemResponse<T>>('POST', ITEM_PATH, {
       body: formData,
     });
   }
 
-  async updateFile(
-    fileId: string,
-    fileData: {
-      name?: string;
-      parentFolderId?: string;
-      file?: File;
-      versionTag?: string;
-    },
-  ) {
+  async #updateItem<T = Item, P extends Object = {}>(
+    itemId: string,
+    fileData: UpdateItemProps,
+    extraProps?: P,
+  ): Promise<UpdateItemResponse<T>> {
     const { name, versionTag, parentFolderId, file } = fileData;
+
+    let item: T | undefined;
+    let version: ItemVersion | undefined;
     if (file) {
       const formData = new FormData();
       formData.append('file', file);
       versionTag && formData.append('versionTag', versionTag);
-      await this.#requestApi<Item>('POST', `${ITEM_PATH}/${fileId}/version`, {
-        body: formData,
+      version = await this.#requestApi<ItemVersion>(
+        'POST',
+        `${ITEM_PATH}/${itemId}/version`,
+        {
+          body: formData,
+        },
+      );
+    }
+    if (name || parentFolderId || extraProps) {
+      const body: UpdateItemDto = {
+        name,
+        folderId: parentFolderId,
+        ...extraProps,
+      };
+
+      item = await this.#requestApi<T>('PUT', `${ITEM_PATH}/${itemId}`, {
+        body,
       });
     }
-    const body: UpdateItemDto = { name, folderId: parentFolderId };
-    return await this.#requestApi<Item>('PUT', `${ITEM_PATH}/${fileId}`, {
-      body,
-    });
+
+    return { item, version };
+  }
+
+  async createFile(fileData: CreateItemProps) {
+    return await this.#createItem(fileData, ITEM_TYPE_FILE);
+  }
+
+  async updateFile(
+    fileId: string,
+    fileData: UpdateItemProps,
+  ): Promise<UpdateItemResponse> {
+    return await this.#updateItem(fileId, fileData);
   }
 
   async archiveFile(fileId: string) {
@@ -153,7 +224,7 @@ export class EngineServicesClient {
 
   async listComponents(folderId?: string) {
     if (folderId) {
-      return await this.#requestApi<ItemFolder[]>(
+      return await this.#requestApi<ComponentItem[]>(
         'GET',
         `${ITEM_PATH}/${folderId}/items`,
         { query: { itemType: ITEM_TYPE_COMPONENT } },
@@ -171,53 +242,35 @@ export class EngineServicesClient {
     );
   }
 
-  async createComponent(componentData: {
-    name: string;
-    versionTag: string;
-    parentFolderId?: string;
-    componentInfo: ComponentProps;
-  }) {
-    const { name, versionTag, parentFolderId, componentInfo } = componentData;
-    return await this.#requestApi<ComponentItem>('POST', ITEM_PATH, {
-      body: {
-        name,
-        versionTag,
-        parentFolderId,
-        extraProps: componentInfo,
-      },
-    });
+  /**
+   * Create a new component.
+   * @function
+   * @deprecated This function is still under development and should not be used in production.
+   */
+
+  async createComponent(fileData: CreateItemProps, extraProps: ComponentProps) {
+    return await this.#createItem<ComponentItem, ComponentProps>(
+      fileData,
+      ITEM_TYPE_COMPONENT,
+      extraProps,
+    );
   }
 
+  /**
+   * Update a component.
+   * @function
+   * @deprecated This function is still under development and should not be used in production.
+   */
+
   async updateComponent(
-    componentId: string,
-    componentData: {
-      file?: File;
-      name?: string;
-      parentFolderId?: string;
-      versionTag?: string;
-      componentInfo?: ComponentProps;
-    },
-  ) {
-    const { name, versionTag, parentFolderId, componentInfo, file } =
-      componentData;
-    if (file) {
-      const formData = new FormData();
-      formData.append('file', file);
-      versionTag && formData.append('versionTag', versionTag);
-      await this.#requestApi<Item>(
-        'POST',
-        `${ITEM_PATH}/${componentId}/version`,
-        {
-          body: formData,
-        },
-      );
-    }
-    return await this.#requestApi<ComponentItem>(
-      'PUT',
-      `${ITEM_PATH}/${componentId}`,
-      {
-        body: { name, versionTag, parentFolderId, componentInfo },
-      },
+    fileId: string,
+    fileData: UpdateItemProps,
+    extraProps: ComponentProps,
+  ): Promise<UpdateItemResponse> {
+    return await this.#updateItem<ComponentItem, ComponentProps>(
+      fileId,
+      fileData,
+      extraProps,
     );
   }
 
@@ -225,6 +278,13 @@ export class EngineServicesClient {
     return await this.#requestApi<ComponentItem>(
       'DELETE',
       `${ITEM_PATH}/${componentId}`,
+    );
+  }
+
+  async recoverComponent(componentId: string) {
+    return await this.#requestApi<ComponentItem>(
+      'PUT',
+      `${ITEM_PATH}/${componentId}/recover`,
     );
   }
 }
