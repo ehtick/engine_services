@@ -1,5 +1,12 @@
 # thatopen-services
 
+## 0.1.3
+
+### Patch Changes
+
+- add build
+- fix build not working
+
 ## 0.1.1
 
 ### Patch Changes
