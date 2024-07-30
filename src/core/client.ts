@@ -54,10 +54,10 @@ export class EngineServicesClient {
     return `${this.apiUrl}/${path}`;
   }
 
-  async #requestApi<T = any>(
+  async #requestApi<T = object>(
     method: Method,
     path: string,
-    requestData?: { body?: any; query?: any },
+    requestData?: { body?: object; query?: object },
   ) {
     const { body, query } = requestData || {};
     const url = this.#buildUrl(path);
@@ -143,7 +143,21 @@ export class EngineServicesClient {
     return await this.#requestApi<Item>('GET', `${ITEM_PATH}/${fileId}`);
   }
 
-  async #createItem<T = Item, P extends Object = {}>(
+  async downloadFile(fileId: string) {
+    return await this.#requestApi<Item>(
+      'GET',
+      `${ITEM_PATH}/${fileId}/download`,
+    );
+  }
+
+  async downloadFolder(folderId: string) {
+    return await this.#requestApi<Item>(
+      'GET',
+      `${FOLDER_PATH}/${folderId}/download`,
+    );
+  }
+
+  async #createItem<T = Item, P extends object = object>(
     fileData: CreateItemProps,
     itemType: ItemType,
     extraProps?: P,
@@ -162,7 +176,7 @@ export class EngineServicesClient {
     });
   }
 
-  async #updateItem<T = Item, P extends Object = {}>(
+  async #updateItem<T = Item, P extends object = object>(
     itemId: string,
     fileData: UpdateItemProps,
     extraProps?: P,

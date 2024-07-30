@@ -1,5 +1,19 @@
 # thatopen-services
 
+## 0.1.5
+
+### Patch Changes
+
+- - Improved build
+  - Fixed minor bugs
+  - Improved lint for dev experience
+
+## 0.1.4
+
+### Patch Changes
+
+- - File and folder download functions
+
 ## 0.1.3
 
 ### Patch Changes
