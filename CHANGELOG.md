@@ -1,5 +1,11 @@
 # thatopen-services
 
+## 0.1.8
+
+### Patch Changes
+
+- remove type module
+
 ## 0.1.7
 
 ### Patch Changes
