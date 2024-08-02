@@ -1,5 +1,11 @@
 # thatopen-services
 
+## 0.2.3
+
+### Patch Changes
+
+- return proper error message
+
 ## 0.2.2
 
 ### Patch Changes

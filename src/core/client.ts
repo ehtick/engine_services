@@ -76,7 +76,7 @@ export class EngineServicesClient {
       },
     );
     if (!response.ok) {
-      const textResponse = response
+      const textResponse = await response
         .text()
         .then((text) => text)
         .catch(() => undefined);
