@@ -58,9 +58,16 @@ export class EngineServicesClient {
   async #requestApi<T = object>(
     method: Method,
     path: string,
-    requestData?: { body?: BodyInit; query?: object },
+    requestData?: {
+      body?: BodyInit;
+      query?: object;
+      contentType?:
+        | 'application/json'
+        | 'multipart/form-data'
+        | 'application/x-www-form-urlencoded';
+    },
   ) {
-    const { body, query } = requestData || {};
+    const { body, query, contentType } = requestData || {};
     const url = this.#buildUrl(path);
 
     const cleanQuery = this.#cleanData(query);
@@ -76,6 +83,7 @@ export class EngineServicesClient {
         method,
         headers: {
           Accept: 'application/json',
+          ...(contentType && { 'Content-Type': contentType }),
         },
         ...(body && { body }),
       },
@@ -133,6 +141,7 @@ export class EngineServicesClient {
   async createFolder(name: string) {
     return await this.#requestApi<ItemFolder>('POST', FOLDER_PATH, {
       body: JSON.stringify({ name }),
+      contentType: 'application/json',
     });
   }
 
@@ -143,6 +152,7 @@ export class EngineServicesClient {
       `${FOLDER_PATH}/${folderId}`,
       {
         body: JSON.stringify({ name } as UpdateItemFolderDto),
+        contentType: 'application/json',
       },
     );
   }
@@ -255,6 +265,7 @@ export class EngineServicesClient {
 
       item = await this.#requestApi<T>('PUT', `${ITEM_PATH}/${itemId}`, {
         body: parsedBody,
+        contentType: 'application/json',
       });
     }
 
