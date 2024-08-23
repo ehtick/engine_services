@@ -352,10 +352,11 @@ export class EngineServicesClient {
     );
   }
 
-  async executeComponent(componentId: string) {
+  async executeComponent(componentId: string, executionParams: object) {
     return await this.#requestApi<ComponentItem>(
       'POST',
       `${PROCESS_PATH}/${componentId}/execute`,
+      { body: JSON.stringify(executionParams) },
     );
   }
 
