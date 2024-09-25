@@ -1,5 +1,17 @@
 # thatopen-services
 
+## 0.4.1
+
+### Patch Changes
+
+- fix typings
+
+## 0.4.0
+
+### Minor Changes
+
+- Adding execution function and listeners
+
 ## 0.3.2
 
 ### Patch Changes

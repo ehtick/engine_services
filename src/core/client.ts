@@ -9,6 +9,12 @@ import {
   ItemVersion,
 } from '../types/items';
 import { CreateItemResponse, UpdateItemResponse } from '../types/response';
+import {
+  ExecutionEntity,
+  ExecutionSuscriptionReturnType,
+  // ExecutionSuscriptionReturnType,
+} from '../types/execution';
+import { io } from 'socket.io-client';
 
 const FOLDER_PATH = 'item/folder';
 const ITEM_PATH = 'item';
@@ -41,14 +47,16 @@ export type UpdateComponentProps = UpdateItemProps & {
 export class EngineServicesClient {
   apiUrl: string;
   accessToken: string;
+  wsUrl: string;
 
   constructor(accessToken: string, apiUrl: string) {
     let url = apiUrl;
     if (url.charAt(url.length - 1) === '/') {
       url = url.slice(0, -1);
     }
-    this.apiUrl = url;
+    this.apiUrl = `${url}/api`;
     this.accessToken = accessToken;
+    this.wsUrl = `${url}?accessToken=${accessToken}`;
   }
 
   #buildUrl(path: string) {
@@ -352,12 +360,60 @@ export class EngineServicesClient {
     );
   }
 
-  async executeComponent(componentId: string, executionParams: object) {
+  async executeComponent(
+    componentId: string,
+    executionParams: object,
+    versionTag?: string,
+  ) {
     return await this.#requestApi<ComponentItem>(
       'POST',
       `${PROCESS_PATH}/${componentId}/execute`,
-      { body: JSON.stringify(executionParams) },
+      {
+        body: JSON.stringify(executionParams),
+        query: { ...(versionTag && { versionTag }) },
+      },
     );
+  }
+
+  async listExecutions(componentId: string) {
+    return await this.#requestApi<ExecutionEntity[]>(
+      'GET',
+      `${PROCESS_PATH}/${componentId}/progress`,
+    );
+  }
+
+  async getExecution(executionId: string) {
+    return await this.#requestApi<ExecutionEntity>(
+      'GET',
+      `${PROCESS_PATH}/progress/${executionId}`,
+    );
+  }
+
+  /** @function
+   * @name myFunction
+   * @param {string} executionId - Identifier of the execution.
+   * @param {string} onUpdateCallback - Callback function to be called when the execution is updated.
+   * @returns {function} - Function to close the socket connection.
+   * */
+
+  async onExecutionProgress(
+    executionId: string,
+    onUpdateCallback: (data: ExecutionSuscriptionReturnType) => void,
+  ) {
+    const socket = io(this.wsUrl);
+
+    socket.on('connect', () => {
+      socket.emit('executionSubscription', JSON.stringify({ executionId }));
+      socket.on('execution', (data: ExecutionSuscriptionReturnType) => {
+        onUpdateCallback(data);
+      });
+    });
+
+    socket.on('connect_error', function (e: any) {
+      throw e;
+    });
+
+    return socket.close;
   }
 
   #cleanData(data?: object) {
