@@ -411,7 +411,7 @@ export class EngineServicesClient {
    * @name myFunction
    * @param {string} executionId - Identifier of the execution.
    * @param {string} onUpdateCallback - Callback function to be called when the execution is updated.
-   * @returns {function} - Function to close the socket connection.
+   * @returns {void} - Nothing is returned. Connection is closed on its own
    * */
 
   async onExecutionProgress(
@@ -430,8 +430,6 @@ export class EngineServicesClient {
     socket.on('connect_error', function (e: any) {
       throw e;
     });
-
-    return socket.close;
   }
 
   #cleanData(data?: object) {

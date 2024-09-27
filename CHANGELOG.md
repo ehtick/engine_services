@@ -1,5 +1,11 @@
 # thatopen-services
 
+## 0.4.3
+
+### Patch Changes
+
+- Remove socket return from progress
+
 ## 0.4.2
 
 ### Patch Changes
