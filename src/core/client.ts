@@ -36,6 +36,10 @@ export type UpdateItemProps = {
   versionTag?: string;
 };
 
+export type GetItemProps = {
+  showVersions?: boolean;
+};
+
 export type CreateComponentProps = CreateItemProps & {
   componentProps: ComponentVersionProps;
 };
@@ -200,8 +204,8 @@ export class EngineServicesClient {
     });
   }
 
-  async getFile(fileId: string) {
-    return await this.#requestApi<Item>('GET', `${ITEM_PATH}/${fileId}`);
+  async getFile(fileId: string, props?: GetItemProps) {
+    return await this.#getItem(fileId, props);
   }
 
   async downloadFile<T = ReadableStream>(
@@ -326,11 +330,8 @@ export class EngineServicesClient {
     });
   }
 
-  async getComponent(componentId: string) {
-    return await this.#requestApi<ComponentItem>(
-      'GET',
-      `${ITEM_PATH}/${componentId}`,
-    );
+  async getComponent(componentId: string, props: GetItemProps) {
+    return await this.#getItem(componentId, props);
   }
 
   /**
@@ -429,6 +430,13 @@ export class EngineServicesClient {
 
     socket.on('connect_error', function (e: any) {
       throw e;
+    });
+  }
+
+  async #getItem(itemId: string, props?: GetItemProps) {
+    const { showVersions = false } = props || {};
+    return await this.#requestApi<Item>('GET', `${ITEM_PATH}/${itemId}`, {
+      query: { showVersions },
     });
   }
 

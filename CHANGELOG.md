@@ -1,5 +1,11 @@
 # thatopen-services
 
+## 0.4.4
+
+### Patch Changes
+
+- Add show versions parameter to item fetch
+
 ## 0.4.3
 
 ### Patch Changes
