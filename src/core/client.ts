@@ -49,6 +49,12 @@ export type UpdateComponentProps = UpdateItemProps & {
   componentProps: ComponentVersionProps;
 };
 
+export type DownloadItemFileParams = {
+  versionTag?: string;
+  withDraft?: boolean;
+  responseType?: ResponseType;
+};
+
 export class EngineServicesClient {
   apiUrl: string;
   accessToken: string;
@@ -206,33 +212,69 @@ export class EngineServicesClient {
   }
 
   async getFile(fileId: string, props?: GetItemProps) {
-    return await this.#getItem(fileId, props);
+    return await this.#getItem<ItemWithVersions<Item>>(fileId, props);
   }
 
   async downloadFile<T = ReadableStream>(
     fileId: string,
-    responseType?: ResponseType,
+    params?: DownloadItemFileParams,
   ) {
+    const { responseType, versionTag, withDraft } = params || {};
     return await this.#requestFile<T>(`${ITEM_PATH}/${fileId}/download`, {
       responseType,
+      query: {
+        ...(versionTag && { versionTag }),
+        ...(withDraft && { withDraft }),
+      },
     });
   }
 
-  async downloadComponentBundle<T = ReadableStream>(
+  async downloadComponent(
     componentId: string,
-    responseType?: ResponseType,
+    params?: DownloadItemFileParams,
   ) {
-    return await this.#requestFile<T>(`${ITEM_PATH}/${componentId}/download`, {
-      responseType,
-    });
+    const { responseType, versionTag, withDraft } = params || {};
+    return await this.#requestFile<string>(
+      `${ITEM_PATH}/${componentId}/download`,
+      {
+        responseType,
+        query: {
+          ...(versionTag && { versionTag }),
+          ...(withDraft && { withDraft }),
+        },
+      },
+    );
+  }
+
+  async downloadComponentBundle(
+    componentId: string,
+    params?: DownloadItemFileParams,
+  ) {
+    const { responseType, versionTag, withDraft } = params || {};
+    return await this.#requestFile<string>(
+      `${ITEM_PATH}/${componentId}/download/bundle`,
+      {
+        responseType,
+        query: {
+          ...(versionTag && { versionTag }),
+          ...(withDraft && { withDraft }),
+        },
+      },
+    );
   }
 
   async downloadAppBundle<T = ReadableStream>(
     appId: string,
-    responseType?: ResponseType,
+    params?: DownloadItemFileParams,
   ) {
+    const { responseType, versionTag, withDraft } = params || {};
+
     return await this.#requestFile<T>(`${ITEM_PATH}/${appId}/download`, {
       responseType,
+      query: {
+        ...(versionTag && { versionTag }),
+        ...(withDraft && { withDraft }),
+      },
     });
   }
 

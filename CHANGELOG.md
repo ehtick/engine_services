@@ -1,5 +1,17 @@
 # thatopen-services
 
+## 0.4.8
+
+### Patch Changes
+
+- Add standard downloadComponent function
+
+## 0.4.7
+
+### Patch Changes
+
+- Return bundle from downloadComponentBundle
+
 ## 0.4.6
 
 ### Patch Changes
