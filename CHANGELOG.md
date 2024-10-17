@@ -1,5 +1,11 @@
 # thatopen-services
 
+## 0.4.10
+
+### Patch Changes
+
+- fix execute not sending params
+
 ## 0.4.9
 
 ### Patch Changes

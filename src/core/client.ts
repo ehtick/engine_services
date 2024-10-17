@@ -436,6 +436,7 @@ export class EngineServicesClient {
       {
         body: JSON.stringify(executionParams),
         query: { ...(versionTag && { versionTag }) },
+        contentType: 'application/json',
       },
     );
   }
