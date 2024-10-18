@@ -1,4 +1,3 @@
-import { Method } from 'axios';
 import { io } from 'socket.io-client';
 import {
   ExecutionEntity,
@@ -53,12 +52,22 @@ export type DownloadItemFileParams = {
   withDraft?: boolean;
 };
 
-export class EngineServicesClient {
-  apiUrl: string;
-  accessToken: string;
-  wsUrl: string;
+export type EngineServicesClientProps = {
+  retries?: number;
+};
 
-  constructor(accessToken: string, apiUrl: string) {
+export class EngineServicesClient {
+  private apiUrl: string;
+  private accessToken: string;
+  private wsUrl: string;
+  private retries: number;
+
+  constructor(
+    accessToken: string,
+    apiUrl: string,
+    props?: EngineServicesClientProps,
+  ) {
+    const { retries = 0 } = props || {};
     let url = apiUrl;
     if (url.charAt(url.length - 1) === '/') {
       url = url.slice(0, -1);
@@ -66,6 +75,11 @@ export class EngineServicesClient {
     this.apiUrl = `${url}/api`;
     this.accessToken = accessToken;
     this.wsUrl = `${url}?accessToken=${accessToken}`;
+    this.retries = retries;
+  }
+
+  setRetries(retries: number) {
+    this.retries = retries;
   }
 
   #buildUrl(path: string) {
@@ -73,7 +87,7 @@ export class EngineServicesClient {
   }
 
   async #requestApi<T = object>(
-    method: Method,
+    method: string,
     path: string,
     requestData?: {
       body?: BodyInit;
@@ -83,7 +97,7 @@ export class EngineServicesClient {
         | 'multipart/form-data'
         | 'application/x-www-form-urlencoded';
     },
-  ) {
+  ): Promise<T> {
     const { body, query, contentType } = requestData || {};
     const url = this.#buildUrl(path);
 
@@ -94,31 +108,40 @@ export class EngineServicesClient {
       accessToken: this.accessToken,
     };
 
-    const response = await fetch(
-      url + '?' + new URLSearchParams(params).toString(),
-      {
-        method,
-        headers: {
-          Accept: 'application/json',
-          ...(contentType && { 'Content-Type': contentType }),
+    try {
+      const response = await fetch(
+        url + '?' + new URLSearchParams(params).toString(),
+        {
+          method,
+          headers: {
+            Accept: 'application/json',
+            ...(contentType && { 'Content-Type': contentType }),
+          },
+          ...(body && { body }),
         },
-        ...(body && { body }),
-      },
-    );
-    if (!response.ok) {
-      const textResponse = await response
-        .text()
-        .then((text) => text)
-        .catch(() => undefined);
-      throw new Error(
-        `Request failed with status ${response.status}: ${response.statusText} - ${textResponse}`,
       );
-    }
+      if (!response.ok) {
+        const textResponse = await response
+          .text()
+          .then((text) => text)
+          .catch(() => undefined);
+        throw new Error(
+          `Request failed with status ${response.status}: ${response.statusText} - ${textResponse}`,
+        );
+      }
 
-    return response
-      .json()
-      .then((data) => data as T)
-      .catch(() => undefined);
+      return response.json().then((data) => data as T);
+    } catch (e) {
+      let retriesAmmount = this.retries;
+      if (retriesAmmount) {
+        retriesAmmount = retriesAmmount - 1;
+        return await this.#requestApi(method, path, {
+          ...requestData,
+        });
+      } else {
+        throw e;
+      }
+    }
   }
 
   async #requestFile(path: string, requestData?: { query?: object }) {

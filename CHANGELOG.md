@@ -1,5 +1,11 @@
 # thatopen-services
 
+## 0.5.2
+
+### Patch Changes
+
+- Remove axios | add retries
+
 ## 0.5.1
 
 ### Patch Changes
