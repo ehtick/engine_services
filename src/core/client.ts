@@ -14,6 +14,7 @@ import {
   ItemWithVersions,
 } from '../types/items';
 import { CreateItemResponse, UpdateItemResponse } from '../types/response';
+import { CreateHiddenItemResult, HiddenFileEntity } from '../types/files';
 
 const FOLDER_PATH = 'item/folder';
 const ITEM_PATH = 'item';
@@ -513,46 +514,57 @@ export class EngineServicesClient {
     });
   }
 
-  async createHiddenItem(file: File, parentItemId: string) {
+  /** @function
+   * @name createHiddenFile
+   * @returns {string} - Returns id of the created hidden file.
+   * */
+
+  async createHiddenFile(file: File, parentFileId: string) {
     const formData = new FormData();
+
     formData.append('file', file);
-    formData.append('parentItemId', parentItemId);
-    return await this.#requestApi<Item>('POST', `${ITEM_PATH}/${HIDDEN_PATH}`, {
-      body: formData,
-    });
+    formData.append('parentItemId', parentFileId);
+
+    return await this.#requestApi<CreateHiddenItemResult>(
+      'POST',
+      `${ITEM_PATH}/${HIDDEN_PATH}`,
+      {
+        body: formData,
+      },
+    );
   }
 
-  async deleteHiddenItem(hiddenId: string) {
+  async deleteHiddenFile(hiddenId: string) {
     return await this.#requestApi<Item>(
       'DELETE',
       `${ITEM_PATH}/${HIDDEN_PATH}/${hiddenId}`,
     );
   }
 
-  async getHiddenItem(hiddenId: string) {
-    return await this.#requestApi<Item>(
+  async getHiddenFile(hiddenId: string) {
+    return await this.#requestApi<HiddenFileEntity>(
       'GET',
       `${ITEM_PATH}/${HIDDEN_PATH}/${hiddenId}`,
     );
   }
 
-  async downloadHiddenItem(hiddenId: string) {
+  async downloadHiddenFile(hiddenId: string) {
     return await this.#requestFile(
       `${ITEM_PATH}/${HIDDEN_PATH}/${hiddenId}/download`,
     );
   }
 
-  async getHiddenItemByParent(parentItemId: string) {
-    return await this.#requestApi<Item[]>(
+  async getHiddenFilesByParent(parentFileId: string) {
+    return await this.#requestApi<HiddenFileEntity[]>(
       'GET',
-      `${ITEM_PATH}/${parentItemId}/${HIDDEN_PATH}`,
+      `${ITEM_PATH}/${parentFileId}/${HIDDEN_PATH}`,
     );
   }
 
-  async deleteHiddenItemByParent(parentItemId: string) {
+  async deleteHiddenFileByParent(parentFileId: string) {
     return await this.#requestApi<Item[]>(
       'DELETE',
-      `${ITEM_PATH}/${parentItemId}/${HIDDEN_PATH}`,
+      `${ITEM_PATH}/${parentFileId}/${HIDDEN_PATH}`,
     );
   }
 

@@ -1,5 +1,11 @@
 # thatopen-services
 
+## 0.5.5
+
+### Patch Changes
+
+- Improve hidden items
+
 ## 0.5.4
 
 ### Patch Changes
