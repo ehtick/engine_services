@@ -1,5 +1,11 @@
 # thatopen-services
 
+## 0.5.6
+
+### Patch Changes
+
+- Allow for fetching with versions for components
+
 ## 0.5.5
 
 ### Patch Changes
