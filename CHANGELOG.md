@@ -1,5 +1,11 @@
 # thatopen-services
 
+## 0.6.1
+
+### Patch Changes
+
+- Improve naming
+
 ## 0.6.0
 
 ### Minor Changes
