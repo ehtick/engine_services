@@ -2,7 +2,11 @@ import { Command } from 'commander';
 import { existsSync, readFileSync } from 'node:fs';
 import { join, basename } from 'node:path';
 import { execSync } from 'node:child_process';
-import { requireConfig } from '../lib/config';
+import {
+  requireResolvedConfig,
+  readLocalConfig,
+  updateLocalConfig,
+} from '../lib/config';
 import { createBundleZip } from '../lib/zip';
 import { EngineServicesClient } from '../../core/client';
 
@@ -22,8 +26,12 @@ export const publishCommand = new Command('publish')
       appId?: string;
       skipBuild?: boolean;
     }) => {
-      const config = requireConfig();
       const cwd = process.cwd();
+      const config = requireResolvedConfig(cwd);
+
+      // Resolve appId: CLI flag > local config > none (new app)
+      const localConfig = readLocalConfig(cwd);
+      const appId = opts.appId || localConfig?.appId;
 
       // Read project package.json
       const pkgPath = join(cwd, 'package.json');
@@ -67,14 +75,15 @@ export const publishCommand = new Command('publish')
         config.apiUrl,
       );
 
-      if (opts.appId) {
+      if (appId) {
         console.log(
-          `Publishing new version (${versionTag}) for app ${opts.appId}...`,
+          `Publishing new version (${versionTag}) for app ${appId}...`,
         );
         const result = await client.createVersion(
-          opts.appId,
+          appId,
           zipBlob,
           versionTag,
+          {}, // extraProps required by backend for APP items
         );
         console.log('Version created:', JSON.stringify(result, null, 2));
       } else {
@@ -85,6 +94,13 @@ export const publishCommand = new Command('publish')
           versionTag,
         });
         console.log('App created:', JSON.stringify(result, null, 2));
+
+        // Auto-save appId to local config for future updates
+        const newAppId = result.item?._id;
+        if (newAppId) {
+          updateLocalConfig({ appId: String(newAppId) }, cwd);
+          console.log(`App ID saved to .thatopen (${newAppId})`);
+        }
       }
 
       console.log('Published successfully!');

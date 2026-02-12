@@ -7,6 +7,9 @@ export function getPackageJson(appName: string, template?: string): string {
       dev: 'vite',
       build: 'vite build',
       preview: 'vite preview',
+      login: 'thatopen login --local',
+      publish: 'thatopen publish',
+      update: 'thatopen publish',
     },
     devDependencies: {
       typescript: '^5.2.0',

@@ -43,7 +43,7 @@ export const createCommand = new Command('create')
     writeFileSync(join(targetDir, 'package.json'), getPackageJson(appName, template));
     writeFileSync(
       join(targetDir, '.gitignore'),
-      'node_modules\ndist\n*.zip\n',
+      'node_modules\ndist\n*.zip\n.thatopen\n',
     );
 
     console.log('');
@@ -52,8 +52,9 @@ export const createCommand = new Command('create')
     console.log('  Next steps:');
     console.log(`    cd ${appName}`);
     console.log('    npm install');
-    console.log('    npm run dev       # Start local dev server');
-    console.log('    npm run build     # Build for production');
-    console.log('    thatopen publish  # Upload to ThatOpen platform');
+    console.log('    npm run dev                          # Start local dev server');
+    console.log('    npm run login -- --token <token>     # Authenticate');
+    console.log('    npm run publish                      # First publish (saves app ID)');
+    console.log('    npm run update                       # Publish new version');
     console.log('');
   });
