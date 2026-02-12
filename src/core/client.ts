@@ -30,8 +30,8 @@ const ITEM_TYPE_APP = 'APP';
 
 /** Properties for creating a new item (file, component, or app). */
 export type CreateItemProps = {
-  /** The file to upload. */
-  file: File;
+  /** The file to upload (File in browsers, Blob in Node.js). */
+  file: File | Blob;
   /** Display name of the item. */
   name: string;
   /** Semantic version tag (e.g. "v1", "v1.0.0"). */
@@ -48,8 +48,8 @@ export type UpdateItemProps = {
   name?: string;
   /** New parent folder ID (moves the item). */
   parentFolderId?: string;
-  /** New file to upload as a new version. */
-  file?: File;
+  /** New file to upload as a new version (File in browsers, Blob in Node.js). */
+  file?: File | Blob;
   /** Version tag for the new file version. */
   versionTag?: string;
   /** Optional key-value metadata for the new version. */
@@ -728,7 +728,7 @@ export class EngineServicesClient {
    * @param parentFileId - The parent item's unique identifier.
    * @returns The hidden file ID.
    */
-  async createHiddenFile(file: File, parentFileId: string) {
+  async createHiddenFile(file: File | Blob, parentFileId: string) {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('parentItemId', parentFileId);
@@ -827,7 +827,7 @@ export class EngineServicesClient {
    */
   async createVersion(
     itemId: string,
-    file: File,
+    file: File | Blob,
     versionTag: string,
     extraProps?: object,
     metadata?: Record<string, string>,

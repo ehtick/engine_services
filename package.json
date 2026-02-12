@@ -3,19 +3,27 @@
   "private": false,
   "version": "0.6.1",
   "main": "dist/index.js",
+  "bin": {
+    "thatopen": "dist/cli.js"
+  },
   "files": [
     "dist"
   ],
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "tsc && vite build && vite build --config vite.config.cli.mts",
+    "build:lib": "tsc && vite build",
+    "build:cli": "vite build --config vite.config.cli.mts",
     "preview": "vite preview",
     "test:ui": "vite --config test/vite.config.mts",
+    "test:cli": "npm run build:cli && node test/setup-test-app.mjs",
+    "test:serve": "cd temp/test-app && thatopen dev --platform",
     "create-version": "yarn build && yarn changeset && yarn changeset version && yarn changeset publish"
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.7",
     "@types/node": "^20.12.12",
+    "commander": "^14.0.3",
     "eslint": "9.x",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.1.3",
