@@ -48,7 +48,12 @@ export const publishCommand = new Command('publish')
       // Build
       if (!opts.skipBuild) {
         console.log('Building...');
-        execSync('npm run build', { cwd, stdio: 'inherit' });
+        try {
+          execSync('npm run build', { cwd, stdio: 'inherit' });
+        } catch (err) {
+          console.error('Build failed. Fix the errors above and try again.');
+          process.exit(1);
+        }
       }
 
       // Check build output
@@ -63,7 +68,12 @@ export const publishCommand = new Command('publish')
       // Create ZIP
       const zipPath = join(cwd, 'dist', 'bundle.zip');
       console.log('Creating bundle ZIP...');
-      await createBundleZip(bundlePath, zipPath);
+      try {
+        await createBundleZip(bundlePath, zipPath);
+      } catch (err) {
+        console.error('Failed to create bundle ZIP:', (err as Error).message);
+        process.exit(1);
+      }
 
       // Read ZIP as Blob for the client
       const zipBuffer = readFileSync(zipPath);
@@ -75,34 +85,47 @@ export const publishCommand = new Command('publish')
         config.apiUrl,
       );
 
-      if (appId) {
-        console.log(
-          `Publishing new version (${versionTag}) for app ${appId}...`,
-        );
-        const result = await client.createVersion(
-          appId,
-          zipBlob,
-          versionTag,
-          {}, // extraProps required by backend for APP items
-        );
-        console.log('Version created:', JSON.stringify(result, null, 2));
-      } else {
-        console.log(`Publishing new app "${appName}" (${versionTag})...`);
-        const result = await client.createApp({
-          file: zipBlob,
-          name: appName,
-          versionTag,
-        });
-        console.log('App created:', JSON.stringify(result, null, 2));
+      try {
+        if (appId) {
+          console.log(
+            `Publishing new version (${versionTag}) for app ${appId}...`,
+          );
+          const result = await client.createVersion(
+            appId,
+            zipBlob,
+            versionTag,
+            {}, // extraProps required by backend for APP items
+          );
+          console.log('Version created:', JSON.stringify(result, null, 2));
+        } else {
+          console.log(`Publishing new app "${appName}" (${versionTag})...`);
+          const result = await client.createApp({
+            file: zipBlob,
+            name: appName,
+            versionTag,
+          });
+          console.log('App created:', JSON.stringify(result, null, 2));
 
-        // Auto-save appId to local config for future updates
-        const newAppId = result.item?._id;
-        if (newAppId) {
-          updateLocalConfig({ appId: String(newAppId) }, cwd);
-          console.log(`App ID saved to .thatopen (${newAppId})`);
+          // Auto-save appId to local config for future updates
+          const newAppId = result.item?._id;
+          if (newAppId) {
+            updateLocalConfig({ appId: String(newAppId) }, cwd);
+            console.log(`App ID saved to .thatopen (${newAppId})`);
+          }
         }
-      }
 
-      console.log('Published successfully!');
+        console.log('Published successfully!');
+      } catch (err) {
+        const message = (err as Error).message || String(err);
+        if (message.includes('401') || message.includes('403')) {
+          console.error('Authentication failed. Check your token with `thatopen login`.');
+        } else if (message.includes('fetch') || message.includes('ECONNREFUSED')) {
+          console.error('Could not connect to the platform. Is the API URL correct?');
+          console.error(`  API URL: ${config.apiUrl}`);
+        } else {
+          console.error('Upload failed:', message);
+        }
+        process.exit(1);
+      }
     },
   );

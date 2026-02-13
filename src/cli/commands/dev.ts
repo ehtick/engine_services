@@ -177,7 +177,7 @@ function getLocalCert(): { key: string; cert: string } {
     cert.toString('base64').match(/.{1,64}/g)!.join('\n') +
     '\n-----END CERTIFICATE-----\n';
 
-  writeFileSync(keyPath, privateKey);
+  writeFileSync(keyPath, privateKey, { mode: 0o600 });
   writeFileSync(certPath, certPem);
 
   console.log(`Certificate saved to ${certDir}`);
@@ -302,7 +302,7 @@ function startPlatformMode(cwd: string, bundlePort: string) {
   try {
     tlsCert = getLocalCert();
   } catch (err) {
-    console.log('Could not generate HTTPS certificate (openssl not found?).');
+    console.log('Could not generate HTTPS certificate.');
     console.log('Falling back to HTTP. This works for local dev but may fail');
     console.log('if the platform is served over HTTPS (mixed content).');
     console.log('');

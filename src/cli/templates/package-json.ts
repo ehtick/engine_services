@@ -1,3 +1,16 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+
+/** Read the library version from package.json so templates stay in sync. */
+const libVersion: string = (() => {
+  try {
+    const pkg = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf-8'));
+    return pkg.version || '0.0.0';
+  } catch {
+    return '0.0.0';
+  }
+})();
+
 export function getPackageJson(appName: string, template?: string): string {
   const pkg: Record<string, unknown> = {
     name: appName,
@@ -21,7 +34,7 @@ export function getPackageJson(appName: string, template?: string): string {
     (pkg.dependencies as Record<string, string>) = {
       '@thatopen/components': '^3.3.1',
       '@thatopen/ui': '^3.3.3',
-      'thatopen-services': '^0.6.1',
+      'thatopen-services': `^${libVersion}`,
       three: '^0.182.0',
     };
   }

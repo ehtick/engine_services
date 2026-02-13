@@ -24,7 +24,7 @@ export function writeConfig(config: ThatOpenConfig): void {
   if (!existsSync(CONFIG_DIR)) {
     mkdirSync(CONFIG_DIR, { recursive: true });
   }
-  writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2));
+  writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2), { mode: 0o600 });
 }
 
 export function requireConfig(): ThatOpenConfig {
@@ -65,7 +65,7 @@ export function writeLocalConfig(
   cwd?: string,
 ): void {
   const dir = cwd || process.cwd();
-  writeFileSync(join(dir, LOCAL_CONFIG_FILE), JSON.stringify(config, null, 2));
+  writeFileSync(join(dir, LOCAL_CONFIG_FILE), JSON.stringify(config, null, 2), { mode: 0o600 });
 }
 
 export function updateLocalConfig(
