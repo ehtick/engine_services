@@ -30,8 +30,8 @@ const ITEM_TYPE_APP = 'APP';
 
 /** Properties for creating a new item (file, component, or app). */
 export type CreateItemProps = {
-  /** The file to upload. */
-  file: File;
+  /** The file to upload (File in browsers, Blob in Node.js). */
+  file: File | Blob;
   /** Display name of the item. */
   name: string;
   /** Semantic version tag (e.g. "v1", "v1.0.0"). */
@@ -48,8 +48,8 @@ export type UpdateItemProps = {
   name?: string;
   /** New parent folder ID (moves the item). */
   parentFolderId?: string;
-  /** New file to upload as a new version. */
-  file?: File;
+  /** New file to upload as a new version (File in browsers, Blob in Node.js). */
+  file?: File | Blob;
   /** Version tag for the new file version. */
   versionTag?: string;
   /** Optional key-value metadata for the new version. */
@@ -100,6 +100,12 @@ export type DownloadItemFileParams = {
 export type EngineServicesClientProps = {
   /** Number of automatic retries on request failure. Default: 0. */
   retries?: number;
+  /**
+   * If true, sends the token as an `Authorization: Bearer` header instead of
+   * an `accessToken` query parameter. Use this when authenticating with an
+   * Auth0 JWT (e.g. inside platform apps) rather than a platform API token.
+   */
+  useBearer?: boolean;
 };
 
 /**
@@ -121,19 +127,21 @@ export class EngineServicesClient {
   private accessToken: string;
   private wsUrl: string;
   private retries: number;
+  private useBearer: boolean;
 
   /**
    * Creates a new EngineServicesClient instance.
-   * @param accessToken - API access token (obtained from the platform dashboard).
+   * @param accessToken - API access token (obtained from the platform dashboard)
+   *   or an Auth0 JWT (when using `useBearer: true`).
    * @param apiUrl - Base URL of the API (e.g. "https://api.thatopen.com").
-   * @param props - Optional configuration (retry count, etc.).
+   * @param props - Optional configuration (retry count, auth mode, etc.).
    */
   constructor(
     accessToken: string,
     apiUrl: string,
     props?: EngineServicesClientProps,
   ) {
-    const { retries = 0 } = props || {};
+    const { retries = 0, useBearer = false } = props || {};
     let url = apiUrl;
     if (url.charAt(url.length - 1) === '/') {
       url = url.slice(0, -1);
@@ -142,6 +150,7 @@ export class EngineServicesClient {
     this.accessToken = accessToken;
     this.wsUrl = `${url}?accessToken=${accessToken}`;
     this.retries = retries;
+    this.useBearer = useBearer;
   }
 
   /**
@@ -176,7 +185,7 @@ export class EngineServicesClient {
 
     const params = {
       ...cleanQuery,
-      accessToken: this.accessToken,
+      ...(this.useBearer ? {} : { accessToken: this.accessToken }),
     };
 
     try {
@@ -187,6 +196,7 @@ export class EngineServicesClient {
           headers: {
             Accept: 'application/json',
             ...(contentType && { 'Content-Type': contentType }),
+            ...(this.useBearer && { Authorization: `Bearer ${this.accessToken}` }),
           },
           ...(body && { body }),
         },
@@ -224,11 +234,16 @@ export class EngineServicesClient {
     const url = this.#buildUrl(path);
     const params = {
       ...query,
-      accessToken: this.accessToken,
+      ...(this.useBearer ? {} : { accessToken: this.accessToken }),
     };
     const response = await fetch(
       url + '?' + new URLSearchParams(params).toString(),
-      { method: 'GET' },
+      {
+        method: 'GET',
+        ...(this.useBearer && {
+          headers: { Authorization: `Bearer ${this.accessToken}` },
+        }),
+      },
     );
 
     return response;
@@ -728,7 +743,7 @@ export class EngineServicesClient {
    * @param parentFileId - The parent item's unique identifier.
    * @returns The hidden file ID.
    */
-  async createHiddenFile(file: File, parentFileId: string) {
+  async createHiddenFile(file: File | Blob, parentFileId: string) {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('parentItemId', parentFileId);
@@ -827,7 +842,7 @@ export class EngineServicesClient {
    */
   async createVersion(
     itemId: string,
-    file: File,
+    file: File | Blob,
     versionTag: string,
     extraProps?: object,
     metadata?: Record<string, string>,

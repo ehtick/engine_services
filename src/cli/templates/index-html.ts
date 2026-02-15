@@ -1,0 +1,29 @@
+export function getIndexHtml(): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ThatOpen App</title>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; overflow: hidden; font-family: system-ui, -apple-system, sans-serif; }
+    #that-open-app { width: 100%; height: 100%; }
+  </style>
+</head>
+<body>
+  <div id="that-open-app"></div>
+  <script>
+    // Simulates the context that the platform provides in production.
+    // When running inside the platform iframe, these values come from query params.
+    window.__THATOPEN_CONTEXT__ = {
+      appId: 'local-dev',
+      projectId: 'local-project',
+      accessToken: '',
+      apiUrl: 'http://localhost:3000',
+    };
+  </script>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>`;
+}

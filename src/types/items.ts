@@ -30,6 +30,8 @@ export type ItemWithVersions<T = Item> = T & { versions: ItemVersion[] };
 export type AppVersionProps = {
   isOnline?: boolean;
   url?: string;
+  /** When set, the app viewer loads the bundle from this URL instead of the API (for local development). */
+  devUrl?: string;
 };
 
 export type AppItem = Item & { itemType: 'APP' };
