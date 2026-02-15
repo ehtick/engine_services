@@ -140,13 +140,23 @@ function getLocalCert(): { key: string; cert: string } {
     encodeGeneralizedTime(notAfter),
   ]));
 
+  // BasicConstraints extension: CA:TRUE (required for Chrome to allow "proceed anyway")
+  const bcOID = encodeOID('2.5.29.19');
+  const bcValue = encodeTLV(0x30, encodeTLV(0x01, Buffer.from([0xff]))); // BOOLEAN TRUE
+  const bcExtension = encodeTLV(0x30, Buffer.concat([
+    bcOID,
+    encodeTLV(0x01, Buffer.from([0xff])), // critical = TRUE
+    encodeTLV(0x04, bcValue),
+  ]));
+
   // SubjectAltName extension: DNS:localhost, IP:127.0.0.1
   const sanOID = encodeOID('2.5.29.17');
   const dnsName = encodeTLV(0x82, Buffer.from('localhost', 'ascii')); // context [2] = dNSName
   const ipAddr = encodeTLV(0x87, Buffer.from([127, 0, 0, 1])); // context [7] = iPAddress
   const sanValue = encodeTLV(0x30, Buffer.concat([dnsName, ipAddr]));
   const sanExtension = encodeTLV(0x30, Buffer.concat([sanOID, encodeTLV(0x04, sanValue)]));
-  const extensions = encodeTLV(0xa3, encodeTLV(0x30, sanExtension));
+
+  const extensions = encodeTLV(0xa3, encodeTLV(0x30, Buffer.concat([bcExtension, sanExtension])));
 
   // TBS Certificate
   const version = encodeTLV(0xa0, encodeInteger(Buffer.from([0x02]))); // v3

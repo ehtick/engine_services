@@ -42,5 +42,10 @@
   "dependencies": {
     "dotenv": "^16.4.5",
     "socket.io-client": "^4.8.0"
+  },
+  "peerDependenciesMeta": {
+    "@thatopen/components": {
+      "optional": true
+    }
   }
 }
