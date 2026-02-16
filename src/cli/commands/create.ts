@@ -7,6 +7,7 @@ import { getMainBim } from '../templates/main-bim';
 import { getMainCloud } from '../templates/main-cloud';
 import { getViteConfig } from '../templates/vite-config';
 import { getPackageJson } from '../templates/package-json';
+import { getContextMdBim, getContextMdDefault, getContextMdCloud } from '../templates/context-md';
 import { writeLocalConfig } from '../lib/config';
 
 const TEMPLATES = ['default', 'bim', 'cloud'] as const;
@@ -20,6 +21,17 @@ function getMainSource(template: Template): string {
       return getMainCloud();
     default:
       return getMainTs();
+  }
+}
+
+function getContextMd(template: Template): string {
+  switch (template) {
+    case 'bim':
+      return getContextMdBim();
+    case 'cloud':
+      return getContextMdCloud();
+    default:
+      return getContextMdDefault();
   }
 }
 
@@ -62,6 +74,7 @@ export const createCommand = new Command('create')
       join(targetDir, '.gitignore'),
       'node_modules\ndist\n*.zip\n.thatopen\n',
     );
+    writeFileSync(join(targetDir, 'CONTEXT.md'), getContextMd(template));
 
     // Write itemType marker for cloud projects so publish/run know the project type
     if (isCloud) {
