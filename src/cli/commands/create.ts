@@ -8,6 +8,7 @@ import { getMainCloud } from '../templates/main-cloud';
 import { getViteConfig } from '../templates/vite-config';
 import { getPackageJson } from '../templates/package-json';
 import { getContextMdBim, getContextMdDefault, getContextMdCloud } from '../templates/context-md';
+import { getTsconfig } from '../templates/tsconfig';
 import { writeLocalConfig } from '../lib/config';
 
 const TEMPLATES = ['default', 'bim', 'cloud'] as const;
@@ -74,6 +75,7 @@ export const createCommand = new Command('create')
       join(targetDir, '.gitignore'),
       'node_modules\ndist\n*.zip\n.thatopen\n',
     );
+    writeFileSync(join(targetDir, 'tsconfig.json'), getTsconfig(template));
     writeFileSync(join(targetDir, 'CONTEXT.md'), getContextMd(template));
 
     // Write itemType marker for cloud projects so publish/run know the project type

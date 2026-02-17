@@ -41,6 +41,8 @@ not as standalone websites. To develop locally:
 3. Live reload is enabled — save a file to rebuild automatically.
 
 The dev server (\`thatopen serve\`) uses esbuild for near-instant incremental rebuilds.
+**Important**: Do NOT run \`vite\`, \`vite build --watch\`, or \`npx vite\` directly for development.
+Always use \`npm run dev\` which runs \`thatopen serve\` under the hood.
 
 ## Key libraries
 
@@ -216,6 +218,8 @@ not as standalone websites. To develop locally:
 3. Live reload is enabled — save a file to rebuild automatically.
 
 The dev server (\`thatopen serve\`) uses esbuild for near-instant incremental rebuilds.
+**Important**: Do NOT run \`vite\`, \`vite build --watch\`, or \`npx vite\` directly for development.
+Always use \`npm run dev\` which runs \`thatopen serve\` under the hood.
 
 ## Adding BIM capabilities
 
