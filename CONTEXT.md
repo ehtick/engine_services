@@ -81,9 +81,12 @@ Built-in components are platform-hosted UI modules fetched at runtime. Usage pat
 ```ts
 import { AppManager, ViewportManager } from "thatopen-services";
 
-// Fetch, evaluate, and register with OBC
-await client.initBuiltInComponent(AppManager, components, { OBC, BUI });
-await client.initBuiltInComponent(ViewportManager, components, { OBC, BUI, THREE, FRAGS });
+// Register all library globals once
+client.setBuiltInGlobals({ OBC, OBF, BUI, CUI, THREE, FRAGS });
+
+// Fetch, evaluate, and register with OBC — globals are automatically applied
+await client.initBuiltInComponent(AppManager, components);
+await client.initBuiltInComponent(ViewportManager, components);
 
 // Use via OBC component system
 const app = components.get(AppManager);
@@ -122,8 +125,9 @@ Available built-in components: `AppManager`, `ViewportManager`, `AreaMeasuringsL
 - `onExecutionProgress(executionId, callback)` — real-time WebSocket subscription
 
 ### Built-in components
+- `setBuiltInGlobals(globals)` — registers globals once; subsequent `initBuiltInComponent` calls use them automatically
 - `getBuiltInComponent(name)` — fetches JS bundle by name
-- `initBuiltInComponent(component, components, globals?)` — fetches, evaluates, and registers
+- `initBuiltInComponent(component, components, globals?)` — fetches, evaluates, and registers (uses stored globals if `globals` omitted)
 
 ### Hidden files
 - `createHiddenFile(file, parentId)` / `deleteHiddenFile(id)` / `getHiddenFile(id)`

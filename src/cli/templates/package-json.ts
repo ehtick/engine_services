@@ -56,8 +56,10 @@ export function getPackageJson(appName: string, template?: string): string {
   if (template === 'bim') {
     (pkg.dependencies as Record<string, string>) = {
       '@thatopen/components': '^3.3.1',
+      '@thatopen/components-front': '^3.3.1',
       '@thatopen/fragments': '^3.3.1',
       '@thatopen/ui': '^3.3.3',
+      '@thatopen/ui-obc': '^3.3.3',
       'thatopen-services': `^${libVersion}`,
       three: '^0.182.0',
     };

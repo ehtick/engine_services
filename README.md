@@ -135,8 +135,12 @@ Platform-hosted UI components loaded at runtime:
 ```typescript
 import { AppManager, ViewportManager } from "thatopen-services";
 
-await client.initBuiltInComponent(AppManager, components, { OBC, BUI });
-await client.initBuiltInComponent(ViewportManager, components, { OBC, BUI, THREE, FRAGS });
+// Register all library globals once
+client.setBuiltInGlobals({ OBC, OBF, BUI, CUI, THREE, FRAGS });
+
+// Load built-in components — globals are automatically applied
+await client.initBuiltInComponent(AppManager, components);
+await client.initBuiltInComponent(ViewportManager, components);
 
 const app = components.get(AppManager);
 const viewports = components.get(ViewportManager);

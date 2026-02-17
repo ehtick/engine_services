@@ -128,6 +128,7 @@ export class EngineServicesClient {
   private wsUrl: string;
   private retries: number;
   private useBearer: boolean;
+  private builtInGlobals: Record<string, unknown> | null = null;
 
   /**
    * Creates a new EngineServicesClient instance.
@@ -159,6 +160,37 @@ export class EngineServicesClient {
    */
   setRetries(retries: number) {
     this.retries = retries;
+  }
+
+  /**
+   * Registers the global libraries that built-in components need at runtime.
+   *
+   * Call this once after importing your libraries. Then every subsequent
+   * {@link initBuiltInComponent} call will use these globals automatically
+   * — you no longer need to pass a `globals` argument to each one.
+   *
+   * @param globals - Map of global names to module namespaces.
+   *   Common keys: `OBC`, `OBF`, `BUI`, `CUI`, `THREE`, `FRAGS`, `MARKERJS`.
+   *
+   * @example
+   * ```ts
+   * import * as OBC from "@thatopen/components";
+   * import * as OBF from "@thatopen/components-front";
+   * import * as BUI from "@thatopen/ui";
+   * import * as CUI from "@thatopen/ui-obc";
+   * import * as THREE from "three";
+   * import * as FRAGS from "@thatopen/fragments";
+   *
+   * client.setBuiltInGlobals({ OBC, OBF, BUI, CUI, THREE, FRAGS });
+   *
+   * // Now just pass the component — no globals needed:
+   * await client.initBuiltInComponent(AppManager, components);
+   * await client.initBuiltInComponent(ViewerToolbar, components);
+   * await client.initBuiltInComponent(ModelsPanel, components);
+   * ```
+   */
+  setBuiltInGlobals(globals: Record<string, unknown>) {
+    this.builtInGlobals = globals;
   }
 
   #buildUrl(path: string) {
@@ -593,16 +625,19 @@ export class EngineServicesClient {
    * @param components - The OBC `Components` instance used to register the
    *   component (must expose a `.get()` method).
    * @param globals - Map of global names to values that the component source
-   *   expects in scope (e.g. `{ OBC, BUI }`). Defaults to
-   *   `window.ThatOpenCompany` if not provided.
+   *   expects in scope (e.g. `{ OBC, BUI }`). If omitted, falls back to
+   *   globals registered via {@link setBuiltInGlobals}, then to
+   *   `window.ThatOpenCompany`.
    *
    * @example
    * ```ts
-   * import { HelloWorld } from "thatopen-services";
+   * // Option 1: register globals once, then init without passing them
+   * client.setBuiltInGlobals({ OBC, OBF, BUI, CUI, THREE, FRAGS });
+   * await client.initBuiltInComponent(AppManager, components);
+   * await client.initBuiltInComponent(ViewerToolbar, components);
    *
+   * // Option 2: pass globals per component (still works)
    * await client.initBuiltInComponent(HelloWorld, components, { OBC, BUI });
-   * const hw = components.get(HelloWorld);
-   * hw.greet("World"); // fully typed
    * ```
    */
   async initBuiltInComponent(
@@ -612,7 +647,10 @@ export class EngineServicesClient {
   ): Promise<void> {
     const source = await this.getBuiltInComponent(component.uuid);
     const resolvedGlobals =
-      globals ?? (typeof window !== 'undefined' ? (window as any).ThatOpenCompany : {}) ?? {};
+      globals ??
+      this.builtInGlobals ??
+      (typeof window !== 'undefined' ? (window as any).ThatOpenCompany : {}) ??
+      {};
 
     const keys = Object.keys(resolvedGlobals);
     const values = keys.map((k) => resolvedGlobals[k]);

@@ -49,7 +49,10 @@ Always use \`npm run dev\` which runs \`thatopen serve\` under the hood.
 | Package | Import | Purpose |
 |---------|--------|---------|
 | \`@thatopen/components\` | \`OBC\` | BIM engine — components, fragments, worlds |
+| \`@thatopen/components-front\` | \`OBF\` | Front-end BIM components (Highlighter, measurements, etc.) |
+| \`@thatopen/fragments\` | \`FRAGS\` | Fragment geometry format |
 | \`@thatopen/ui\` | \`BUI\` | UI web components (\`<bim-panel>\`, \`<bim-grid>\`, etc.) |
+| \`@thatopen/ui-obc\` | \`CUI\` | Pre-built OBC UI tables (used by ModelsPanel) |
 | \`three\` | \`THREE\` | 3D rendering engine |
 | \`thatopen-services\` | \`EngineServicesClient\` | Platform API client + built-in components |
 
@@ -72,14 +75,56 @@ They are fetched, evaluated, and registered with the OBC component system.
 
 ### Loading pattern
 
+Register all globals once with \`setBuiltInGlobals\`, then load components without passing globals each time:
+
 \`\`\`ts
 import { AppManager, ViewportManager } from "thatopen-services";
 
-await client.initBuiltInComponent(AppManager, components, { OBC, BUI });
-await client.initBuiltInComponent(ViewportManager, components, { OBC, BUI, THREE, FRAGS });
+// Register all library globals once
+client.setBuiltInGlobals({ OBC, OBF, BUI, CUI, THREE, FRAGS });
+
+// Load built-in components — globals are automatically applied
+await client.initBuiltInComponent(AppManager, components);
+await client.initBuiltInComponent(ViewportManager, components);
 
 const app = components.get(AppManager);
 const viewports = components.get(ViewportManager);
+\`\`\`
+
+**Important**: Always call \`setBuiltInGlobals\` before loading any built-in components.
+
+### Required globals per component
+
+| Component | Globals to pass | Extra npm packages needed |
+|-----------|----------------|--------------------------|
+| AppManager | \`{ OBC, BUI }\` | — |
+| ViewportManager | \`{ OBC, BUI, THREE, FRAGS }\` | — |
+| LoadModelButton | \`{ OBC, BUI }\` | — |
+| ModelsDropdown | \`{ OBC, BUI }\` | — |
+| ModelsPanel | \`{ OBC, BUI, CUI }\` | \`@thatopen/ui-obc\` |
+| ViewerToolbar | \`{ OBC, OBF, BUI, THREE }\` | \`@thatopen/components-front\` |
+| ColorsPalette | \`{ OBC, OBF, BUI }\` | \`@thatopen/components-front\` |
+| ClashesList | \`{ OBC, OBF, BUI, THREE }\` | \`@thatopen/components-front\` |
+| ClassificationsList | \`{ OBC, OBF, BUI }\` | \`@thatopen/components-front\` |
+| ClippingsList | \`{ OBC, BUI }\` | — |
+| HighlightersList | \`{ OBC, OBF, BUI }\` | \`@thatopen/components-front\` |
+| LengthMeasuringsList | \`{ OBC, OBF, BUI, THREE }\` | \`@thatopen/components-front\` |
+| AreaMeasuringsList | \`{ OBC, OBF, BUI, THREE }\` | \`@thatopen/components-front\` |
+| QtoComparisonList | \`{ OBC, OBF, BUI }\` | \`@thatopen/components-front\` |
+| QueriesHierarchy | \`{ OBC, OBF, BUI }\` | \`@thatopen/components-front\` |
+| CustomViewLegend | \`{ OBC, BUI }\` | — |
+| ScreenshotAnnotator | \`{ OBC, BUI, MARKERJS }\` | \`@markerjs/markerjs3\` |
+
+### Global abbreviations
+
+\`\`\`ts
+import * as OBC from "@thatopen/components";
+import * as OBF from "@thatopen/components-front";   // needed for Toolbar, Highlighters, Clashes, etc.
+import * as BUI from "@thatopen/ui";
+import * as CUI from "@thatopen/ui-obc";              // needed for ModelsPanel
+import * as THREE from "three";
+import * as FRAGS from "@thatopen/fragments";
+import * as MARKERJS from "@markerjs/markerjs3";      // needed for ScreenshotAnnotator
 \`\`\`
 
 ### AppManager — app shell with CSS grid layouts
@@ -116,25 +161,6 @@ const { element, world } = await viewports.create();
 // element is an HTMLElement to place in a layout slot
 // world has world.scene, world.camera, world.renderer
 \`\`\`
-
-### Other available built-in components
-
-- **LoadModelButton** — button with dropdown for loading IFC/Fragment files
-- **ViewerToolbar** — toolbar with Show/Hide, Focus, Isolate, Color controls
-- **ModelsPanel** — panel listing loaded models with search and load button
-- **ModelsDropdown** — dropdown selector for loaded models
-- **ClassificationsList** — hierarchical IFC classification browser
-- **ClashesList** — clash detection results table
-- **ClippingsList** — clipping plane management panel
-- **LengthMeasuringsList** / **AreaMeasuringsList** — measurement panels
-- **ColorsPalette** — color picker for highlighting
-- **HighlightersList** — highlight style manager
-- **QtoComparisonList** — property quantity comparison table
-- **QueriesHierarchy** — multi-level query browser
-- **CustomViewLegend** — color legend overlay
-- **ScreenshotAnnotator** — screenshot markup dialog
-
-All follow the same pattern: \`await client.initBuiltInComponent(Component, components, globals)\`, then \`components.get(Component)\`.
 
 ## Loading a BIM model
 
@@ -234,7 +260,10 @@ Then follow the BIM app pattern:
 \`\`\`ts
 import * as THREE from "three";
 import * as OBC from "@thatopen/components";
+import * as OBF from "@thatopen/components-front";
+import * as FRAGS from "@thatopen/fragments";
 import * as BUI from "@thatopen/ui";
+import * as CUI from "@thatopen/ui-obc";
 import { EngineServicesClient, AppManager, ViewportManager } from "thatopen-services";
 
 const ctx = window.__THATOPEN_CONTEXT__!;
@@ -243,8 +272,12 @@ const components = new OBC.Components();
 
 BUI.Manager.init();
 
-await client.initBuiltInComponent(AppManager, components, { OBC, BUI });
-await client.initBuiltInComponent(ViewportManager, components, { OBC, BUI, THREE, FRAGS });
+// Register all library globals once
+client.setBuiltInGlobals({ OBC, OBF, BUI, CUI, THREE, FRAGS });
+
+// Load built-in components — globals are automatically applied
+await client.initBuiltInComponent(AppManager, components);
+await client.initBuiltInComponent(ViewportManager, components);
 
 const viewports = components.get(ViewportManager);
 const { element, world } = await viewports.create();
