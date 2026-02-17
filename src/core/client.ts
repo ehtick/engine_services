@@ -17,7 +17,7 @@ import {
 } from '../types/items';
 import { CreateItemResponse, UpdateItemResponse } from '../types/response';
 import { CreateHiddenItemResult, HiddenFileEntity } from '../types/files';
-import { Project } from '../types/projects';
+import { Project, ProjectContext } from '../types/projects';
 
 const FOLDER_PATH = 'item/folder';
 const ITEM_PATH = 'item';
@@ -964,6 +964,19 @@ export class EngineServicesClient {
     return await this.#requestApi<Project>(
       'GET',
       `${PROJECT_PATH}/${projectId}`,
+    );
+  }
+
+  /**
+   * Gets the full project context, including users, roles, files, and folders.
+   * User data is stripped of sensitive fields server-side.
+   * @param projectId - The project's unique identifier.
+   * @returns The aggregated project context DTO.
+   */
+  async getProjectContext(projectId: string) {
+    return await this.#requestApi<ProjectContext>(
+      'GET',
+      `${PROJECT_PATH}/${projectId}/context`,
     );
   }
 
