@@ -5,7 +5,7 @@ Client library and CLI for the That Open Platform — a cloud platform for build
 ## What this repo contains
 
 1. **Library** (`src/core/client.ts`) — `EngineServicesClient`, a TypeScript API client for managing files, folders, apps, cloud components, and executions on the platform.
-2. **CLI** (`src/cli/`) — The `thatopen` command-line tool for scaffolding, developing, and publishing apps and cloud components.
+2. **CLI** (`src/cli/`) — The `thatopen` command-line tool for scaffolding and publishing apps and cloud components.
 3. **Built-in components** (`src/built-in/`) — Type stubs for platform-provided UI components (AppManager, ViewportManager, etc.) that are fetched and evaluated at runtime.
 
 ## Project structure
@@ -15,7 +15,7 @@ src/
   core/client.ts          # EngineServicesClient — the main API class
   cli/
     commands/create.ts    # thatopen create — scaffolds new projects
-    commands/dev.ts       # thatopen dev — local dev server
+    commands/serve.ts     # thatopen serve — dev server (esbuild watch + serve)
     commands/login.ts     # thatopen login — authenticate with the platform
     commands/publish.ts   # thatopen publish — build and upload to the platform
     commands/run.ts       # thatopen run — test cloud components locally
@@ -45,7 +45,6 @@ npm run build:cli      # CLI only
 ```bash
 npm run test:ui                   # Interactive browser test page
 npm run test:cli-build-app        # Scaffold + build a test app
-npm run test:cli-serve-app        # Serve the test app in platform mode
 npm run test:cli-build-component  # Scaffold + build a test cloud component
 npm run test:cli-run-component    # Run the test cloud component locally
 ```
@@ -138,7 +137,7 @@ Available built-in components: `AppManager`, `ViewportManager`, `AreaMeasuringsL
 
 ```bash
 thatopen create <name> [--template bim|default|cloud]   # Scaffold project
-thatopen dev [--port N] [--platform] [--bundle-port N]   # Local dev server
+thatopen serve [--port N]                                # Dev server (esbuild watch + serve bundle)
 thatopen login [--token T] [--api-url U] [--local]       # Authenticate
 thatopen publish [--name N] [--version-tag T] [--skip-build] [--app-id ID | --component-id ID]
 thatopen run [--params '{}'] [--skip-build]              # Test cloud component locally

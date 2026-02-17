@@ -25,11 +25,10 @@ UI components, and the platform API.
 ## Commands
 
 \`\`\`bash
-npm run dev        # Serve bundle for local dev inside the platform
-npm run build               # Build dist/bundle.js
+npm run dev        # Start dev server (esbuild watch + serve on :4000)
+npm run build               # Build dist/bundle.js (Vite/Rollup production build)
 npm run login               # Authenticate with the platform (saves token locally)
-npm run publish             # First publish — creates the app on the platform
-npm run update              # Publish a new version of an existing app
+npm run publish             # Publish to the platform
 \`\`\`
 
 ### Local development
@@ -37,9 +36,11 @@ npm run update              # Publish a new version of an existing app
 Apps run inside the That Open Platform (platform.thatopen.com) within a project —
 not as standalone websites. To develop locally:
 
-1. Run \`npm run dev\` — this builds in watch mode and serves the bundle.
+1. Run \`npm run dev\` — this watches source files with esbuild and serves the bundle on port 4000.
 2. Open your project on the platform and click the debug button.
 3. Live reload is enabled — save a file to rebuild automatically.
+
+The dev server (\`thatopen serve\`) uses esbuild for near-instant incremental rebuilds.
 
 ## Key libraries
 
@@ -199,11 +200,10 @@ It runs in the browser inside the platform's iframe.
 ## Commands
 
 \`\`\`bash
-npm run dev        # Serve bundle for local dev inside the platform
-npm run build               # Build dist/bundle.js
+npm run dev        # Start dev server (esbuild watch + serve on :4000)
+npm run build               # Build dist/bundle.js (Vite/Rollup production build)
 npm run login               # Authenticate with the platform (saves token locally)
-npm run publish             # First publish — creates the app on the platform
-npm run update              # Publish a new version of an existing app
+npm run publish             # Publish to the platform
 \`\`\`
 
 ### Local development
@@ -211,9 +211,11 @@ npm run update              # Publish a new version of an existing app
 Apps run inside the That Open Platform (platform.thatopen.com) within a project —
 not as standalone websites. To develop locally:
 
-1. Run \`npm run dev\` — this builds in watch mode and serves the bundle.
+1. Run \`npm run dev\` — this watches source files with esbuild and serves the bundle on port 4000.
 2. Open your project on the platform and click the debug button.
 3. Live reload is enabled — save a file to rebuild automatically.
+
+The dev server (\`thatopen serve\`) uses esbuild for near-instant incremental rebuilds.
 
 ## Adding BIM capabilities
 
@@ -292,8 +294,7 @@ It runs on the server as a Node.js process, triggered via the platform API.
 npm run build      # Build dist/bundle.js
 npm run run        # Build and run locally (uses thatopen run)
 npm run login      # Authenticate with the platform (saves token locally)
-npm run publish    # First publish — creates the component on the platform
-npm run update     # Publish a new version of an existing component
+npm run publish    # Publish to the platform
 \`\`\`
 
 To pass parameters when running locally:

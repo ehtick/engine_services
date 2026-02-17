@@ -22,7 +22,6 @@ export function getPackageJson(appName: string, template?: string): string {
         run: 'thatopen run',
         login: 'thatopen login --local',
         publish: 'thatopen publish',
-        update: 'thatopen publish',
       },
       dependencies: {
         '@thatopen/components': '^3.3.1',
@@ -42,11 +41,10 @@ export function getPackageJson(appName: string, template?: string): string {
     version: '1.0.0',
     private: true,
     scripts: {
-      dev: 'thatopen dev --platform',
+      dev: 'thatopen serve',
       build: 'vite build',
       login: 'thatopen login --local',
       publish: 'thatopen publish',
-      update: 'thatopen publish',
     },
     devDependencies: {
       typescript: '^5.2.0',

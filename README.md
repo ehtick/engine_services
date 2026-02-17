@@ -35,7 +35,7 @@ npm run run   # Build and test locally
 ## What's in this package
 
 - **Library** — `EngineServicesClient` for interacting with the That Open API (files, folders, apps, cloud components, executions, permissions)
-- **CLI** — `thatopen` command for scaffolding, developing, and publishing
+- **CLI** — `thatopen` command for scaffolding and publishing
 - **Built-in component types** — TypeScript stubs for platform-hosted UI components (AppManager, ViewportManager, etc.)
 
 ## Library usage
@@ -73,7 +73,7 @@ const client = new EngineServicesClient(ctx.accessToken, ctx.apiUrl, { useBearer
 | Command | Description |
 |---------|-------------|
 | `thatopen create <name> [--template bim\|default\|cloud]` | Scaffold a new project |
-| `thatopen dev [--platform]` | Start local dev server |
+| `thatopen serve [--port N]` | Dev server (esbuild watch + serve bundle) |
 | `thatopen login [--token T] [--local]` | Authenticate with the platform |
 | `thatopen publish` | Build and publish to the platform |
 | `thatopen run [--params '{}']` | Build and test a cloud component locally |
@@ -95,11 +95,8 @@ npm run dev
 # 3. Authenticate
 npm run login -- --token <your-token>
 
-# 4. Publish (first time creates the app, saves app ID)
+# 4. Publish
 npm run publish
-
-# 5. Update (subsequent publishes)
-npm run update
 ```
 
 ## Cloud component workflow
@@ -184,9 +181,6 @@ npm link
 
 # Build CLI and scaffold a test app
 npm run test:cli-build-app
-
-# Serve the test app in platform mode
-npm run test:cli-serve-app
 
 # Build and scaffold a test cloud component
 npm run test:cli-build-component

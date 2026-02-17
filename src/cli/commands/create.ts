@@ -93,13 +93,11 @@ export const createCommand = new Command('create')
     if (isCloud) {
       console.log('    npm run login -- --token <token>     # Authenticate');
       console.log('    npm run run                          # Test locally');
-      console.log('    npm run publish                      # First publish');
-      console.log('    npm run update                       # Publish new version');
+      console.log('    npm run publish                      # Publish to the platform');
     } else {
-      console.log('    npm run dev                          # Serve app inside the platform');
+      console.log('    npm run dev                          # Start dev server + open in platform');
       console.log('    npm run login -- --token <token>     # Authenticate');
-      console.log('    npm run publish                      # First publish (saves app ID)');
-      console.log('    npm run update                       # Publish new version');
+      console.log('    npm run publish                      # Publish to the platform');
     }
     console.log('');
   });

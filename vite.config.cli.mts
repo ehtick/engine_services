@@ -29,6 +29,9 @@ export default defineConfig({
         'net',
         'tls',
         'zlib',
+        // esbuild is a native binary — cannot be bundled.
+        // Resolved from the user's node_modules at runtime (Vite depends on it).
+        'esbuild',
       ],
       output: {
         banner: '#!/usr/bin/env node',
