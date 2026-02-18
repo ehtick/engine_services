@@ -22,7 +22,6 @@ export function getPackageJson(appName: string, template?: string): string {
         run: 'thatopen run',
         login: 'thatopen login --local',
         publish: 'thatopen publish',
-        update: 'thatopen publish',
       },
       dependencies: {
         '@thatopen/components': '^3.3.1',
@@ -30,6 +29,7 @@ export function getPackageJson(appName: string, template?: string): string {
         three: '^0.182.0',
       } as Record<string, string>,
       devDependencies: {
+        '@types/three': '^0.182.0',
         typescript: '^5.2.0',
         vite: '^5.2.0',
       } as Record<string, string>,
@@ -42,12 +42,10 @@ export function getPackageJson(appName: string, template?: string): string {
     version: '1.0.0',
     private: true,
     scripts: {
-      dev: 'vite',
+      dev: 'thatopen serve',
       build: 'vite build',
-      preview: 'vite preview',
       login: 'thatopen login --local',
       publish: 'thatopen publish',
-      update: 'thatopen publish',
     },
     devDependencies: {
       typescript: '^5.2.0',
@@ -58,10 +56,14 @@ export function getPackageJson(appName: string, template?: string): string {
   if (template === 'bim') {
     (pkg.dependencies as Record<string, string>) = {
       '@thatopen/components': '^3.3.1',
+      '@thatopen/components-front': '^3.3.1',
+      '@thatopen/fragments': '^3.3.1',
       '@thatopen/ui': '^3.3.3',
+      '@thatopen/ui-obc': '^3.3.3',
       'thatopen-services': `^${libVersion}`,
       three: '^0.182.0',
     };
+    (pkg.devDependencies as Record<string, string>)['@types/three'] = '^0.182.0';
   }
 
   return JSON.stringify(pkg, null, 2);

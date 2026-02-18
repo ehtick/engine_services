@@ -7,6 +7,8 @@ import { getMainBim } from '../templates/main-bim';
 import { getMainCloud } from '../templates/main-cloud';
 import { getViteConfig } from '../templates/vite-config';
 import { getPackageJson } from '../templates/package-json';
+import { getContextMdBim, getContextMdDefault, getContextMdCloud } from '../templates/context-md';
+import { getTsconfig } from '../templates/tsconfig';
 import { writeLocalConfig } from '../lib/config';
 
 const TEMPLATES = ['default', 'bim', 'cloud'] as const;
@@ -20,6 +22,17 @@ function getMainSource(template: Template): string {
       return getMainCloud();
     default:
       return getMainTs();
+  }
+}
+
+function getContextMd(template: Template): string {
+  switch (template) {
+    case 'bim':
+      return getContextMdBim();
+    case 'cloud':
+      return getContextMdCloud();
+    default:
+      return getContextMdDefault();
   }
 }
 
@@ -62,6 +75,8 @@ export const createCommand = new Command('create')
       join(targetDir, '.gitignore'),
       'node_modules\ndist\n*.zip\n.thatopen\n',
     );
+    writeFileSync(join(targetDir, 'tsconfig.json'), getTsconfig(template));
+    writeFileSync(join(targetDir, 'CONTEXT.md'), getContextMd(template));
 
     // Write itemType marker for cloud projects so publish/run know the project type
     if (isCloud) {
@@ -80,13 +95,11 @@ export const createCommand = new Command('create')
     if (isCloud) {
       console.log('    npm run login -- --token <token>     # Authenticate');
       console.log('    npm run run                          # Test locally');
-      console.log('    npm run publish                      # First publish');
-      console.log('    npm run update                       # Publish new version');
+      console.log('    npm run publish                      # Publish to the platform');
     } else {
-      console.log('    npm run dev                          # Start local dev server');
+      console.log('    npm run dev                          # Start dev server + open in platform');
       console.log('    npm run login -- --token <token>     # Authenticate');
-      console.log('    npm run publish                      # First publish (saves app ID)');
-      console.log('    npm run update                       # Publish new version');
+      console.log('    npm run publish                      # Publish to the platform');
     }
     console.log('');
   });

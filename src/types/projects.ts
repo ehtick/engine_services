@@ -38,3 +38,46 @@ export interface ProjectWithRole {
   project: Project;
   role: ProjectRole | null;
 }
+
+// ─── Project Data DTO ─────────────────────────────────────────────
+
+/** Stripped-down user info safe for app consumption. */
+export interface ProjectDataUser {
+  _id: string;
+  fullName: string;
+  email: string;
+}
+
+/** A project member with their role info. */
+export interface ProjectDataMember {
+  projectUserId: string;
+  user: ProjectDataUser;
+  role: ProjectRole;
+}
+
+/** Minimal file info for the project data. */
+export interface ProjectDataFile {
+  _id: string;
+  name: string;
+  fileExtension?: string;
+  folderId?: string;
+  itemType: string;
+  createdAt: string;
+}
+
+/** Minimal folder info for the project data. */
+export interface ProjectDataFolder {
+  _id: string;
+  name: string;
+  parentId?: string;
+}
+
+/** Aggregated project data returned by `getProjectData()`. */
+export interface ProjectData {
+  project: Project;
+  currentUser: ProjectDataMember | null;
+  users: ProjectDataMember[];
+  roles: ProjectRole[];
+  files: ProjectDataFile[];
+  folders: ProjectDataFolder[];
+}
