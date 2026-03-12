@@ -60,7 +60,7 @@ Always use \`npm run dev\` which runs \`thatopen serve\` under the hood.
 
 \`\`\`
 1. Create EngineServicesClient from platform context
-2. Call client.initApp(globals, ...builtIns) — creates OBC.Components,
+2. Call client.setup(globals, ...builtIns) — creates OBC.Components,
    inits BUI, loads built-in components, calls components.init()
 3. Create viewport(s) and UI elements
 4. Configure AppManager with elements + layouts
@@ -98,7 +98,7 @@ interfaces, method signatures, and code examples.
 
 ### Loading pattern
 
-Use \`initApp\` to create the component system and load built-in components in one call:
+Use \`setup\` to create the component system and load built-in components in one call:
 
 \`\`\`ts
 import { EngineServicesClient, AppManager, ViewportManager } from "thatopen-services";
@@ -106,7 +106,7 @@ import { EngineServicesClient, AppManager, ViewportManager } from "thatopen-serv
 const client = EngineServicesClient.fromPlatformContext();
 
 // Creates OBC.Components, inits BUI, loads built-ins, calls components.init()
-const { components } = await client.initApp(
+const { components } = await client.setup(
   { OBC, OBF, BUI, CUI, THREE, FRAGS },
   AppManager, ViewportManager,
 );
@@ -309,7 +309,7 @@ import * as CUI from "@thatopen/ui-obc";
 import { EngineServicesClient, AppManager, ViewportManager } from "thatopen-services";
 
 const client = EngineServicesClient.fromPlatformContext();
-const { components } = await client.initApp(
+const { components } = await client.setup(
   { OBC, OBF, BUI, CUI, THREE, FRAGS },
   AppManager, ViewportManager,
 );

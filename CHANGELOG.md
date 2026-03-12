@@ -1,5 +1,11 @@
 # thatopen-services
 
+## 0.9.0
+
+### Minor Changes
+
+- Rename `client.initApp()` to `client.setup()` for a cleaner API surface
+
 ## 0.8.0
 
 ### Minor Changes

@@ -781,7 +781,7 @@ export class EngineServicesClient {
    *
    * @example
    * ```ts
-   * const { components } = await client.initApp(
+   * const { components } = await client.setup(
    *   { OBC, OBF, BUI, CUI, THREE, FRAGS },
    *   AppManager, ViewportManager,
    * );
@@ -790,7 +790,7 @@ export class EngineServicesClient {
    * const { element, world } = await viewports.create();
    * ```
    */
-  async initApp(
+  async setup(
     globals: Record<string, unknown>,
     ...builtIns: { uuid: string }[]
   ): Promise<{ components: ComponentsLike }> {
