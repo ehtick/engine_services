@@ -1,5 +1,11 @@
 # thatopen-services
 
+## 0.10.0
+
+### Minor Changes
+
+- c6516d0: Deploy new version
+
 ## 0.9.0
 
 ### Minor Changes
