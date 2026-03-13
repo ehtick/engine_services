@@ -818,10 +818,10 @@ export class EngineServicesClient {
   /**
    * Reports an error to the platform via the {@link AppEventOrchestrator.appError} callback.
    * @param code - Numeric error code.
-   * @param message - Human-readable error description.
+   * @param data - Arbitrary error data to send to the platform.
    */
-  throwError(code: number, message: string): void {
-    this.context.appEventOrchestrator?.appError?.(code, message);
+  throwError(code: number, data: Record<string, string>): void {
+    this.context.appEventOrchestrator?.appError?.(code, data);
   }
 
   // ─── Apps ────────────────────────────────────────────────────────

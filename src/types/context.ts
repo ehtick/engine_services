@@ -3,7 +3,7 @@ export interface AppEventOrchestrator {
   /** Called when the app has finished loading (components initialised). */
   appLoaded?: () => void;
   /** Called when the app reports an error to the platform. */
-  appError?: (code: number, message: string) => void;
+  appError?: (code: number, data: Record<string, string>) => void;
 }
 
 /** Auth context injected by the That Open Platform into `window.__THATOPEN_CONTEXT__`. */
