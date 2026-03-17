@@ -1,5 +1,11 @@
 # thatopen-services
 
+## 0.11.1
+
+### Patch Changes
+
+- 626d202: better type handling for built-in components
+
 ## 0.11.0
 
 ### Minor Changes
