@@ -61,7 +61,7 @@ Always use \`npm run dev\` which runs \`thatopen serve\` under the hood.
 \`\`\`
 1. Create EngineServicesClient from platform context
 2. Call client.setup(globals, ...builtIns) — creates OBC.Components,
-   inits BUI, loads built-in components, calls components.init()
+  inits BUI, loads built-in components, calls components.init()
 3. Create viewport(s) and UI elements
 4. Configure AppManager with elements + layouts
 5. Call app.init()
@@ -165,20 +165,26 @@ Creates a grid-based layout system. Define named element slots and named layouts
 A sidebar for switching layouts appears automatically when multiple layouts exist.
 
 \`\`\`ts
-app.setup = {
-  elements: {
-    viewer: viewportElement,
-    panel: panelFunction,    // Can be HTMLElement, () => BUI.TemplateResult, or { template, initialState }
+const Layouts = ["Viewer", "Split"];
+const Elements = ["viewer", "panel"];
+
+await app.init({
+  client,
+  icons: undefined, // pass Record<K, string> when using typed App interface with icon keys
+  grid: (grid: BUI.Grid<Layouts, Elements>) => {
+    grid.elements = {
+      viewer: viewportElement,
+      panel: panelFunction, // Can be HTMLElement, () => BUI.TemplateResult, or { template, initialState }
+    };
+    grid.layouts = {
+      Viewer: { template: \\\`"viewer" 1fr / 1fr\\\` },
+      Split: {
+        template: \\\`"panel viewer" 1fr / 20rem 1fr\\\`,
+        icon: "solar:settings-bold",
+      },
+    };
   },
-  layouts: {
-    Viewer: { template: \\\`"viewer" 1fr / 1fr\\\` },
-    Split: {
-      template: \\\`"panel viewer" 1fr / 20rem 1fr\\\`,
-      icon: "solar:settings-bold",
-    },
-  },
-};
-app.init();
+});
 \`\`\`
 
 The \`template\` string uses CSS \`grid-template\` shorthand: \`"areas" rows / columns\`.

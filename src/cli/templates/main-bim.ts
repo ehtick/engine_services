@@ -9,9 +9,12 @@ export function getMainBim(): string {
     'import * as FRAGS from "@thatopen/fragments";',
     'import * as BUI from "@thatopen/ui";',
     'import * as CUI from "@thatopen/ui-obc";',
-    'import { EngineServicesClient, AppManager, ViewportManager } from "thatopen-services";',
+    'import { EngineServicesClient, AppManager, ViewportsManager } from "thatopen-services";',
     '',
     'import type { ProjectData } from "thatopen-services";',
+    '',
+    'type AppGridLayouts = ["Viewer", "Split"];',
+    'type AppGridElements = ["viewer", "panel"];',
     '',
     '// Wrap in async function since IIFE format does not support top-level await.',
     'async function main() {',
@@ -27,9 +30,29 @@ export function getMainBim(): string {
     '  if (client.context.projectId) {',
     '    try {',
     '      projectData = await client.getProjectData(client.context.projectId);',
-    '      console.log(' + backtick + 'Project: ' + dollar + '{projectData.project.title}' + backtick + ');',
-    '      console.log(' + backtick + 'Current user: ' + dollar + '{projectData.currentUser?.user.fullName}' + backtick + ');',
-    '      console.log(' + backtick + 'Members: ' + dollar + '{projectData.users.length}, Files: ' + dollar + '{projectData.files.length}' + backtick + ');',
+    '      console.log(' +
+      backtick +
+      'Project: ' +
+      dollar +
+      '{projectData.project.title}' +
+      backtick +
+      ');',
+    '      console.log(' +
+      backtick +
+      'Current user: ' +
+      dollar +
+      '{projectData.currentUser?.user.fullName}' +
+      backtick +
+      ');',
+    '      console.log(' +
+      backtick +
+      'Members: ' +
+      dollar +
+      '{projectData.users.length}, Files: ' +
+      dollar +
+      '{projectData.files.length}' +
+      backtick +
+      ');',
     '    } catch (err) {',
     '      console.warn("Could not fetch project data:", err);',
     '    }',
@@ -41,13 +64,13 @@ export function getMainBim(): string {
     '  // calls components.init().',
     '  const { components } = await client.setup(',
     '    { OBC, OBF, BUI, CUI, THREE, FRAGS },',
-    '    AppManager, ViewportManager,',
+    '    AppManager, ViewportsManager,',
     '  );',
     '',
     '  // ─── 3D Viewport ──────────────────────────────────────────────',
     '  // ViewportManager creates a fully configured viewport with its own',
     '  // world (scene, camera, renderer) and auto-initialises fragments.',
-    '  const viewports = components.get(ViewportManager);',
+    '  const viewports = components.get(ViewportsManager);',
     '  const { element: viewerElement, world } = await viewports.create();',
     '',
     '  // ─── Load a Model ────────────────────────────────────────────',
@@ -70,14 +93,26 @@ export function getMainBim(): string {
     '  try {',
     '    const files = await client.listFiles();',
     '    fileNames = files.map((f) => f.name);',
-    '    console.log(' + backtick + 'Loaded ' + dollar + '{files.length} files from API' + backtick + ');',
+    '    console.log(' +
+      backtick +
+      'Loaded ' +
+      dollar +
+      '{files.length} files from API' +
+      backtick +
+      ');',
     '  } catch (err) {',
     '    console.warn("Could not fetch files:", err);',
     '    fileNames = ["(Could not load files — check token permissions)"];',
     '  }',
     '',
     '  const fileList = fileNames',
-    '    .map((name) => BUI.html' + backtick + '<bim-label>' + dollar + '{name}</bim-label>' + backtick + ');',
+    '    .map((name) => BUI.html' +
+      backtick +
+      '<bim-label>' +
+      dollar +
+      '{name}</bim-label>' +
+      backtick +
+      ');',
     '',
     '  // ─── Cloud Component Testing ──────────────────────────────────',
     '  // Demonstrates executing a cloud component both locally (via',
@@ -105,9 +140,21 @@ export function getMainBim(): string {
     '    const progressEl = document.getElementById("exec-progress");',
     '    const messagesEl = document.getElementById("exec-messages");',
     '    if (statusEl) statusEl.textContent = executionStatus;',
-    '    if (progressEl) progressEl.textContent = ' + backtick + 'Progress: ' + dollar + '{executionProgress}%' + backtick + ';',
+    '    if (progressEl) progressEl.textContent = ' +
+      backtick +
+      'Progress: ' +
+      dollar +
+      '{executionProgress}%' +
+      backtick +
+      ';',
     '    if (messagesEl) messagesEl.innerHTML = executionMessages',
-    '      .map((m) => ' + backtick + '<bim-label>' + dollar + '{m}</bim-label>' + backtick + ').join("");',
+    '      .map((m) => ' +
+      backtick +
+      '<bim-label>' +
+      dollar +
+      '{m}</bim-label>' +
+      backtick +
+      ').join("");',
     '  }',
     '',
     '  async function runComponent(useLocal: boolean) {',
@@ -125,7 +172,13 @@ export function getMainBim(): string {
     '        greeting: "Hello from the BIM app!",',
     '      });',
     '',
-    '      executionStatus = ' + backtick + 'Running (' + dollar + '{executionId.slice(0, 8)}...)' + backtick + ';',
+    '      executionStatus = ' +
+      backtick +
+      'Running (' +
+      dollar +
+      '{executionId.slice(0, 8)}...)' +
+      backtick +
+      ';',
     '      updateExecutionUI();',
     '',
     '      // Subscribe to real-time progress updates via WebSocket',
@@ -133,7 +186,15 @@ export function getMainBim(): string {
     '        if (data.progressUpdate) {',
     '          executionProgress = data.progressUpdate.progress;',
     '          if (data.progressUpdate.result) {',
-    '            executionStatus = ' + backtick + '' + dollar + '{data.progressUpdate.result}: ' + dollar + '{data.progressUpdate.resultMessage || "Done"}' + backtick + ';',
+    '            executionStatus = ' +
+      backtick +
+      '' +
+      dollar +
+      '{data.progressUpdate.result}: ' +
+      dollar +
+      '{data.progressUpdate.resultMessage || "Done"}' +
+      backtick +
+      ';',
     '          }',
     '        }',
     '        if (data.messageUpdate) {',
@@ -149,13 +210,27 @@ export function getMainBim(): string {
     '          const exec = await client.getExecution(executionId);',
     '          if (exec.result) {',
     '            executionProgress = exec.progress;',
-    '            executionStatus = ' + backtick + '' + dollar + '{exec.result}: ' + dollar + '{exec.resultMessage || "Done"}' + backtick + ';',
+    '            executionStatus = ' +
+      backtick +
+      '' +
+      dollar +
+      '{exec.result}: ' +
+      dollar +
+      '{exec.resultMessage || "Done"}' +
+      backtick +
+      ';',
     '            updateExecutionUI();',
     '          }',
     '        } catch { /* ignore — WebSocket will handle it */ }',
     '      }, 2000);',
     '    } catch (err) {',
-    '      executionStatus = ' + backtick + 'Error: ' + dollar + '{err}' + backtick + ';',
+    '      executionStatus = ' +
+      backtick +
+      'Error: ' +
+      dollar +
+      '{err}' +
+      backtick +
+      ';',
     '      updateExecutionUI();',
     '    } finally {',
     '      // Reset local routing so other calls go to the cloud',
@@ -167,21 +242,37 @@ export function getMainBim(): string {
     '    return BUI.html' + backtick + '',
     '      <bim-panel label="App Info">',
     '        <bim-panel-section label="Context">',
-    '          <bim-label>App ID: ' + dollar + '{client.context.appId}</bim-label>',
-    '          <bim-label>Project ID: ' + dollar + '{client.context.projectId}</bim-label>',
-    '          <bim-label>API URL: ' + dollar + '{client.context.apiUrl}</bim-label>',
+    '          <bim-label>App ID: ' +
+      dollar +
+      '{client.context.appId}</bim-label>',
+    '          <bim-label>Project ID: ' +
+      dollar +
+      '{client.context.projectId}</bim-label>',
+    '          <bim-label>API URL: ' +
+      dollar +
+      '{client.context.apiUrl}</bim-label>',
     '        </bim-panel-section>',
-    '        <bim-panel-section label="Files (' + dollar + '{fileNames.length})">',
+    '        <bim-panel-section label="Files (' +
+      dollar +
+      '{fileNames.length})">',
     '          ' + dollar + '{fileList}',
     '        </bim-panel-section>',
     '        <bim-panel-section label="Cloud Component" icon="solar:code-bold">',
-    '          <bim-label>Component ID: ' + dollar + '{COMPONENT_ID}</bim-label>',
-    '          <bim-label>Local server: ' + dollar + '{LOCAL_SERVER_URL}</bim-label>',
+    '          <bim-label>Component ID: ' +
+      dollar +
+      '{COMPONENT_ID}</bim-label>',
+    '          <bim-label>Local server: ' +
+      dollar +
+      '{LOCAL_SERVER_URL}</bim-label>',
     '          <div style="display: flex; gap: 0.5rem;">',
     '            <bim-button label="Run Local" icon="solar:play-bold"',
-    '              @click=' + dollar + '{() => runComponent(true)}></bim-button>',
+    '              @click=' +
+      dollar +
+      '{() => runComponent(true)}></bim-button>',
     '            <bim-button label="Run Deployed" icon="solar:cloud-bold-duotone"',
-    '              @click=' + dollar + '{() => runComponent(false)}></bim-button>',
+    '              @click=' +
+      dollar +
+      '{() => runComponent(false)}></bim-button>',
     '          </div>',
     '          <bim-label id="exec-status">Idle</bim-label>',
     '          <bim-label id="exec-progress">Progress: 0%</bim-label>',
@@ -207,24 +298,36 @@ export function getMainBim(): string {
     '  // Load them with: client.initBuiltInComponents(components, Component1, Component2)',
     '  const app = components.get(AppManager);',
     '',
-    '  app.setup = {',
-    '    elements: {',
+    '  const grid = (grid: BUI.Grid<AppGridLayouts, AppGridElements>) => {',
+    '    grid.elements = {',
     '      viewer: viewerElement,',
     '      panel,',
-    '    },',
-    '    layouts: {',
-    '      Viewer: { template: ' + backtick + '"viewer" 1fr / 1fr' + backtick + ' },',
+    '    };',
+    '    grid.layouts = {',
+    '      Viewer: { template: ' +
+      backtick +
+      '"viewer" 1fr / 1fr' +
+      backtick +
+      ' },',
     '      Split: {',
-    '        template: ' + backtick + '"panel viewer" 1fr / 20rem 1fr' + backtick + ',',
+    '        template: ' +
+      backtick +
+      '"panel viewer" 1fr / 20rem 1fr' +
+      backtick +
+      ',',
     '        icon: "solar:settings-bold",',
     '      },',
-    '    },',
+    '    };',
+    '    grid.layout = "Viewer";',
     '  };',
     '',
-    '  app.init();',
+    '  await app.init({',
+    '    client,',
+    '    icons: undefined,',
+    '    grid,',
+    '  });',
     '}',
     '',
     'main().catch(console.error);',
-    '',
   ].join('\n');
 }
