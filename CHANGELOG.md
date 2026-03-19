@@ -1,5 +1,11 @@
 # thatopen-services
 
+## 0.12.0
+
+### Patch Changes
+
+- 28cd180: Updates templates to use new app setup logic
+
 ## 0.11.1
 
 ### Patch Changes
