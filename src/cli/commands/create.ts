@@ -77,7 +77,8 @@ export const createCommand = new Command('create')
     const pkgPath = join(targetDir, 'package.json');
     const pkg = readFileSync(pkgPath, 'utf-8')
       .replace(/\{\{PROJECT_NAME\}\}/g, packageName)
-      .replace(/\{\{VERSION\}\}/g, libVersion);
+      .replace(/\{\{VERSION\}\}/g, libVersion)
+      .replace(/"thatopen-services": "file:[^"]*"/, `"thatopen-services": "^${libVersion}"`);
     writeFileSync(pkgPath, pkg);
 
     // Install dependencies automatically
