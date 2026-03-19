@@ -27,6 +27,8 @@
     "test:cli-serve-component": "cd temp/test-component && thatopen local-server",
     "test:cli-build-tests": "npm run build:cli && thatopen create-tests temp",
     "test:cli-serve-tests": "thatopen serve-tests temp",
+    "template:bim": "cd src/cli/templates/bim && npm install && cd ../../../.. && node scripts/generate-template-tsconfig.mjs",
+    "template:bim:dev": "cd src/cli/templates/bim && npm run dev",
     "changeset": "changeset",
     "version": "changeset version"
   },
