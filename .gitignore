@@ -25,6 +25,11 @@ dist-ssr
 *.sw?
 
 
+# Template dev artifacts (node_modules already covered above)
+src/cli/templates/**/*-lock.json
+src/cli/templates/**/*.lock
+src/cli/templates/**/tsconfig.json
+
 # Local testing files
 *.local.dev.*
 
