@@ -796,11 +796,11 @@ export class EngineServicesClient {
    * const { element, world } = await viewports.create();
    * ```
    */
-  async setup(
+  async setup<TComponents extends ComponentsLike = ComponentsLike>(
     globals: Record<string, unknown>,
     ...builtIns: { uuid: string }[]
-  ): Promise<{ components: ComponentsLike }> {
-    const OBC = globals.OBC as { Components?: new () => ComponentsLike } | undefined;
+  ): Promise<{ components: TComponents }> {
+    const OBC = globals.OBC as { Components?: new () => TComponents } | undefined;
     const BUI = globals.BUI as { Manager?: { init(): void } } | undefined;
     if (!OBC?.Components)
       throw new Error('globals.OBC must include Components');

@@ -10,14 +10,15 @@
     "thatopen": "dist/cli.js"
   },
   "files": [
-    "dist"
+    "dist",
+    "src/cli/templates"
   ],
   "scripts": {
     "dev": "vite",
     "lint": "eslint src/",
     "build": "eslint src/ && tsc && vite build && vite build --config vite.config.cli.mts",
     "build:lib": "tsc && vite build",
-    "build:cli": "vite build --config vite.config.cli.mts",
+    "build:cli": "vite build --config vite.config.cli.mts && node scripts/copy-templates.mjs",
     "preview": "vite preview",
     "test:ui": "vite --config test/vite.config.mts",
     "test:cli-build-app": "npm run build:cli && node test/setup-test-app.mjs",
@@ -27,6 +28,8 @@
     "test:cli-serve-component": "cd temp/test-component && thatopen local-server",
     "test:cli-build-tests": "npm run build:cli && thatopen create-tests temp",
     "test:cli-serve-tests": "thatopen serve-tests temp",
+    "template:bim": "cd src/cli/templates/bim && npm install && cd ../../../.. && node scripts/generate-template-tsconfig.mjs",
+    "template:bim:dev": "cd src/cli/templates/bim && npm run dev",
     "changeset": "changeset",
     "version": "changeset version"
   },
