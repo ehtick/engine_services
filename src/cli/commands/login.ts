@@ -8,7 +8,7 @@ export const loginCommand = new Command('login')
   .option(
     '--api-url <url>',
     'API URL',
-    'https://dev.api.thatopen.com',
+    'https://dev.platform.thatopen.com',
   )
   .option(
     '--local',
