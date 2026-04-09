@@ -10,11 +10,11 @@
   },
   "dependencies": {
     "@markerjs/markerjs3": "^3.9.0",
-    "@thatopen/components": "~3.3.0",
-    "@thatopen/components-front": "~3.3.0",
-    "@thatopen/fragments": "~3.3.0",
-    "@thatopen/ui": "~3.3.0",
-    "@thatopen/ui-obc": "~3.3.0",
+    "@thatopen/components": "~3.4.0",
+    "@thatopen/components-front": "~3.4.0",
+    "@thatopen/fragments": "~3.4.0",
+    "@thatopen/ui": "~3.4.0",
+    "@thatopen/ui-obc": "~3.4.0",
     "thatopen-services": "file:../../../..",
     "three": "^0.182.0"
   },
