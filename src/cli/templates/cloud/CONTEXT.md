@@ -7,7 +7,7 @@ It runs on the server as a Node.js process, triggered via the platform API.
 
 - **Entry point**: `src/main.ts` — must export an `async function main()`.
 - **Parameter schema**: `declarations.json` — the list of parameters this component accepts. Bundled next to the code so the platform, the UI, and `thatopen run` know what to pass in.
-- **Build output**: `dist/bundle.js` — an IIFE built by Vite with platform deps externalized.
+- **Build output**: `dist/bundle.js` — an IIFE built by Vite with `thatopen-services` externalized.
 - **Execution**: The platform (or `thatopen run` locally) wraps the bundle in an execution engine that provides globals and calls `main()`.
 
 ## Parameters (`declarations.json`)
@@ -73,32 +73,35 @@ The server watches source files and auto-rebuilds — changes are picked up on t
 
 ## Globals available at runtime
 
-The execution engine injects these into scope — do NOT import them:
+The execution engine injects **exactly these four** into scope — do NOT import them, do NOT assume anything else is available:
 
 | Global | Type | Purpose |
 |--------|------|---------|
-| `thatOpenServices` | `EngineServicesClient` | Authenticated API client (can manage files, trigger other components, etc.) |
-| `executionParams` | `Record<string, any>` | Parameters passed by the caller |
-| `executionReporter` | `{ message(msg), progress(pct) }` | Send live status updates and progress percentage |
-| `OBC` | `@thatopen/components` | BIM engine — components, fragments, worlds |
-| `THREE` | `three` | 3D math and geometry utilities |
-| `WEBIFC` | `web-ifc` | Low-level IFC parser (may not be available) |
-| `fs` | Node.js `fs` | Filesystem access |
+| `thatOpenServices` | `EngineServicesClient` | Authenticated API client (files, folders, components, executions) |
+| `executionParams` | `Record<string, any>` | User-supplied parameters (shape defined in `declarations.json`) |
+| `executionContext` | `{ projectId?, executionId, toolId, toolVersion }` | Platform-supplied run context. Use `executionContext.projectId` to scope operations to the project the component was launched from. Undefined when run outside a project context. |
+| `executionReporter` | `{ message(msg), error(msg), progress(pct) }` | Send live status updates, error lines, and a numeric progress percentage to the execution UI |
+
+Libraries like `@thatopen/components`, `three`, `web-ifc`, or Node's `fs` are **not** available as globals. If you need them, `import` them the normal way and let the bundler include them in `dist/bundle.js`. The execution environment is a plain Node.js process with no special additions beyond the four globals above.
 
 ### TypeScript declarations
 
-These are already declared in `src/main.ts`. Keep them there for type checking:
+Already declared in `src/main.ts`. Keep them there for type checking:
 
 ```ts
 declare const thatOpenServices: import("thatopen-services").EngineServicesClient;
-declare const executionParams: Record<string, any>;
+declare const executionParams: Record<string, unknown>;
+declare const executionContext: {
+  projectId?: string;
+  executionId: string;
+  toolId: string;
+  toolVersion: string;
+};
 declare const executionReporter: {
   message(msg: string): void;
+  error(msg: string): void;
   progress(pct: number): void;
 };
-declare const OBC: typeof import("@thatopen/components");
-declare const THREE: typeof import("three");
-declare const fs: typeof import("fs");
 ```
 
 ## Return value
@@ -112,54 +115,48 @@ return { type: "SUCCESS", message: "Processed 42 elements" };
 
 ## Common patterns
 
-### Processing an IFC file from platform storage
+### Scoping uploads to the launching project
+
+```ts
+export async function main() {
+  const projectId = executionContext?.projectId;
+  if (!projectId) {
+    return { type: "FAIL", message: "This component must be launched from a project" };
+  }
+
+  const blob = new Blob(["hello"], { type: "text/plain" });
+  await thatOpenServices.createFile({
+    file: blob,
+    name: "hello.txt",
+    versionTag: "v1",
+    projectId,
+  });
+
+  return { type: "SUCCESS", message: "Uploaded into the project" };
+}
+```
+
+### Processing a file from platform storage
 
 ```ts
 export async function main() {
   const { fileId } = executionParams;
 
   executionReporter.message("Downloading file...");
-  const response = await thatOpenServices.downloadFile(fileId);
+  const response = await thatOpenServices.downloadFile(fileId as string);
   const buffer = await response.arrayBuffer();
 
-  executionReporter.message("Processing model...");
-  executionReporter.progress(25);
-
-  const components = new OBC.Components();
-  // ... process the model ...
-
+  executionReporter.progress(50);
+  // ... process the buffer ...
   executionReporter.progress(100);
+
   return { type: "SUCCESS", message: "Done" };
 }
 ```
 
-### Uploading results back to the platform
+### Triggering another cloud component
 
 ```ts
-const resultBlob = new Blob([JSON.stringify(results)], { type: "application/json" });
-await thatOpenServices.createFile({
-  file: resultBlob,
-  name: "results.json",
-  versionTag: "v1",
-  parentFolderId: executionParams.outputFolderId,
-});
-```
-
-### Using the EngineServicesClient
-
-The `thatOpenServices` global is a pre-authenticated `EngineServicesClient`:
-
-```ts
-// Files
-const files = await thatOpenServices.listFiles();
-const response = await thatOpenServices.downloadFile(fileId);
-await thatOpenServices.createFile({ file: blob, name: "output.ifc", versionTag: "v1" });
-
-// Folders
-const folders = await thatOpenServices.listFolders();
-await thatOpenServices.createFolder("Results");
-
-// Trigger another cloud component
 const { executionId } = await thatOpenServices.executeComponent(otherComponentId, { param: "value" });
 const result = await thatOpenServices.getExecution(executionId);
 ```
@@ -167,8 +164,8 @@ const result = await thatOpenServices.getExecution(executionId);
 ## Build configuration
 
 - `vite.config.js` builds to IIFE format.
-- Platform dependencies (`@thatopen/components`, `three`, `web-ifc`, `thatopen-services`, `fs`, `path`, `crypto`, `os`) are **externalized** — they are provided by the execution engine at runtime.
-- The build output has a footer `var main = ThatOpenComponent.main;` so the engine can find the entry point.
+- Only `thatopen-services` is externalized — the wrapper provides it at runtime via `require()`. Everything else (including any third-party npm dependency you install) is bundled into `dist/bundle.js`.
+- The build output has a footer `var main = ThatOpenComponent.main;` so the engine can find the entry point as a top-level `main` variable.
 
 ## Configuration
 

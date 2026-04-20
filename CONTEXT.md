@@ -68,8 +68,8 @@ yarn create-version   # Build → changeset → version → publish
 | **Runs in** | Browser (iframe on the platform) | Server (Node.js child process) |
 | **Item type** | `APP` | `TOOL` |
 | **Entry point** | Side effects in `main.ts` (renders UI) | `export async function main()` |
-| **Context** | `window.__THATOPEN_CONTEXT__` provides `{ appId, projectId, accessToken, apiUrl }` | Globals: `thatOpenServices`, `executionParams`, `executionReporter`, `OBC`, `THREE`, `fs` |
-| **Build output** | IIFE `dist/bundle.js` (all deps bundled) | IIFE `dist/bundle.js` (platform deps externalized) |
+| **Context** | `window.__THATOPEN_CONTEXT__` provides `{ appId, projectId, accessToken, apiUrl }` | Globals: `thatOpenServices`, `executionParams`, `executionContext` (`{ projectId?, executionId, toolId, toolVersion }`), `executionReporter` (`message/error/progress`). `OBC`, `THREE`, `web-ifc`, `fs` are NOT injected — import them and let the bundler include them. |
+| **Build output** | IIFE `dist/bundle.js` (all deps bundled) | IIFE `dist/bundle.js` (only `thatopen-services` externalized) |
 | **Template** | `bim`, `default`, or `test` | `cloud` or `cloud-test` |
 
 ### Authentication

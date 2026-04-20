@@ -5,11 +5,10 @@
 //
 //   thatOpenServices  — pre-authenticated EngineServicesClient
 //   executionParams   — parameters passed by the caller (shape defined in ../declarations.json)
-//   executionReporter — { message(msg), progress(pct) } for live feedback
-//   OBC              — @thatopen/components (BIM engine)
-//   THREE            — three (3D math/geometry)
-//   WEBIFC           — web-ifc (low-level IFC parser, may not be available)
-//   fs               — Node.js filesystem module
+//   executionContext  — platform-supplied run context: { projectId?, executionId, toolId, toolVersion }
+//                       Use executionContext.projectId to scope uploads/lookups to the launching project.
+//                       Undefined when the component is run outside a project context.
+//   executionReporter — { message(msg), error(msg), progress(pct) } for live feedback
 //
 // Parameters are declared in `declarations.json` at the project root. That
 // file is bundled alongside this code at publish time so the platform (and
@@ -25,16 +24,17 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 declare const thatOpenServices: import("thatopen-services").EngineServicesClient;
 declare const executionParams: Record<string, unknown>;
+declare const executionContext: {
+  projectId?: string;
+  executionId: string;
+  toolId: string;
+  toolVersion: string;
+};
 declare const executionReporter: {
   message(msg: string): void;
+  error(msg: string): void;
   progress(pct: number): void;
 };
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-declare const OBC: typeof import("@thatopen/components");
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-declare const THREE: typeof import("three");
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-declare const fs: typeof import("fs");
 
 export async function main() {
   const projectName = executionParams.projectName as string | undefined;
@@ -44,6 +44,9 @@ export async function main() {
     `Starting for "${projectName ?? "(unnamed)"}"`,
   );
   executionReporter.message(`Will run ${iterations} iteration(s)`);
+  if (executionContext?.projectId) {
+    executionReporter.message(`Scoped to project ${executionContext.projectId}`);
+  }
 
   if (!projectName) {
     return { type: "FAIL", message: "projectName parameter is required" };

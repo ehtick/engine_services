@@ -14,16 +14,11 @@ export default defineConfig({
     },
     outDir: 'dist',
     rollupOptions: {
-      external: [
-        'thatopen-services',
-        '@thatopen/components',
-        'three',
-        'web-ifc',
-        'fs',
-        'path',
-        'crypto',
-        'os',
-      ],
+      // Only thatopen-services is externalized — the execution wrapper
+      // provides it at runtime via require('thatopen-services'). Every
+      // other dependency (including @thatopen/components, three, web-ifc,
+      // or any npm package you install) must be bundled into bundle.js.
+      external: ['thatopen-services'],
       output: {
         footer: 'var main = ThatOpenComponent.main;',
       },
