@@ -161,6 +161,39 @@ const { executionId } = await thatOpenServices.executeComponent(otherComponentId
 const result = await thatOpenServices.getExecution(executionId);
 ```
 
+### Listing resources inside a project
+
+Pass `projectId` to the list methods to enumerate a specific project's
+resources. The backend enforces project-scoped permissions — the token
+running your component must have `STORAGE:READ` (or the relevant role)
+on that project; otherwise the call is rejected with `403`. A missing
+`projectId` still works and lists items in the caller's personal scope.
+
+```ts
+const projectId = executionContext?.projectId;
+if (projectId) {
+  const files = await thatOpenServices.listFiles({ projectId });
+  const folders = await thatOpenServices.listFolders({ projectId });
+  // listApps / listComponents / listExecutions all accept projectId too
+}
+```
+
+### Gating an action with a permission check
+
+```ts
+const { hasPermission, scope } = await thatOpenServices.checkPermission({
+  resourceType: "STORAGE",
+  action: "WRITE",
+  projectId: executionContext?.projectId,
+});
+if (!hasPermission) {
+  return { type: "FAIL", message: "Caller cannot write to this project" };
+}
+// scope is 'global' | 'project' | 'entity' | 'none' — useful when you
+// want the UI to know *why* a permission was granted. checkPermissionBatch
+// accepts a list of checks in a single round-trip.
+```
+
 ## Build configuration
 
 - `vite.config.js` builds to IIFE format.
