@@ -53,9 +53,9 @@ import * as OBF from "@thatopen/components-front";
 import * as FRAGS from "@thatopen/fragments";
 import * as BUI from "@thatopen/ui";
 import * as CUI from "@thatopen/ui-obc";
-import { EngineServicesClient, AppManager, ViewportManager } from "thatopen-services";
+import { PlatformClient, AppManager, ViewportManager } from "thatopen-services";
 
-const client = EngineServicesClient.fromPlatformContext();
+const client = PlatformClient.fromPlatformContext();
 const { components } = await client.setup(
   { OBC, OBF, BUI, CUI, THREE, FRAGS },
   AppManager, ViewportManager,
@@ -70,9 +70,9 @@ const { element, world } = await viewports.create();
 If you install `thatopen-services`, you can make API calls:
 
 ```ts
-import { EngineServicesClient } from "thatopen-services";
+import { PlatformClient } from "thatopen-services";
 
-const client = EngineServicesClient.fromPlatformContext();
+const client = PlatformClient.fromPlatformContext();
 
 // Files
 const files = await client.listFiles();

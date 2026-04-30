@@ -9,7 +9,7 @@ import * as FRAGS from "@thatopen/fragments";
 import * as BUI from "@thatopen/ui";
 import * as CUI from "@thatopen/ui-obc";
 import {
-  EngineServicesClient,
+  PlatformClient,
   AppManager,
   ViewportManager,
 } from "thatopen-services";
@@ -162,7 +162,7 @@ function createTestPng(): Blob {
 }
 
 async function main() {
-  const client = EngineServicesClient.fromPlatformContext();
+  const client = PlatformClient.fromPlatformContext();
 
   // ─── OBC Components + Built-in Components ─────────────────────
   const { components } = await client.initApp(
@@ -269,7 +269,7 @@ async function main() {
   appManager.init();
 }
 
-async function runAllTests(resultsEl: HTMLElement, client: EngineServicesClient, componentIdInput: HTMLInputElement, localServerInput: HTMLInputElement) {
+async function runAllTests(resultsEl: HTMLElement, client: PlatformClient, componentIdInput: HTMLInputElement, localServerInput: HTMLInputElement) {
   const groups: TestGroup[] = [];
   const ts = Date.now();
 

@@ -93,9 +93,9 @@ interfaces, method signatures, and code examples.
 Use `setup` to create the component system and load built-in components in one call:
 
 ```ts
-import { EngineServicesClient, AppManager, ViewportsManager } from "thatopen-services";
+import { PlatformClient, AppManager, ViewportsManager } from "thatopen-services";
 
-const client = EngineServicesClient.fromPlatformContext();
+const client = PlatformClient.fromPlatformContext();
 
 // Creates OBC.Components, inits BUI, loads built-ins, calls components.init()
 const { components } = await client.setup(
@@ -212,7 +212,7 @@ await fragments.core.load(fileBuffer, { modelId: "my-model" });
 
 ```ts
 // Recommended: auto-reads window.__THATOPEN_CONTEXT__ and sets useBearer: true
-const client = EngineServicesClient.fromPlatformContext();
+const client = PlatformClient.fromPlatformContext();
 console.log(client.context.projectId); // access the platform context
 
 // Files

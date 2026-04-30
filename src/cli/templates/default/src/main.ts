@@ -13,7 +13,7 @@
 //   npm install @thatopen/components @thatopen/ui three thatopen-services
 // Then see the "bim" template for the full pattern.
 
-import { EngineServicesClient } from "thatopen-services";
+import { PlatformClient } from "thatopen-services";
 import type { ThatOpenContext, ProjectData } from "thatopen-services";
 
 declare global {
@@ -28,7 +28,7 @@ async function main() {
   // ─── Engine Services Client ───────────────────────────────────
   // Reads the auth context from window.__THATOPEN_CONTEXT__ (injected
   // by the platform) and creates a client with Bearer auth.
-  const client = EngineServicesClient.fromPlatformContext();
+  const client = PlatformClient.fromPlatformContext();
 
   // ─── Project Data ───────────────────────────────────────────────
   // Fetches project data (users, roles, files, folders) in one call.

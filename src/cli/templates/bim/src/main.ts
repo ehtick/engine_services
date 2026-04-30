@@ -6,7 +6,7 @@ import * as BUI from "@thatopen/ui";
 import * as CUI from "@thatopen/ui-obc";
 import * as MARKERJS from "@markerjs/markerjs3"
 import {
-  EngineServicesClient,
+  PlatformClient,
   AppManager,
   ViewportsManager,
   UIManager,
@@ -20,7 +20,7 @@ async function main() {
   // ─── Platform Client ──────────────────────────────────────────
   // Reads auth context from window.__THATOPEN_CONTEXT__ (injected by the
   // platform) and creates a client with Bearer auth.
-  const client = EngineServicesClient.fromPlatformContext();
+  const client = PlatformClient.fromPlatformContext();
 
   // ─── Built-in Components ──────────────────────────────────────
   // First argument: library globals used by the engine.
