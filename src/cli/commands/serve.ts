@@ -55,6 +55,14 @@ export const serveCommand = new Command('serve')
       outfile: bundlePath,
       sourcemap: true,
       logLevel: 'info',
+      logOverride: {
+        // IIFE format leaves import.meta empty. The only consumer of import.meta
+        // in our ecosystem today is @thatopen/fragments' worker URL fallback,
+        // which is never executed because ViewportsManager (and any other
+        // FragmentsManager.init caller) always passes an explicit worker URL via
+        // FragmentsManager.getWorker(). Silencing avoids noise on every build.
+        'empty-import-meta': 'silent',
+      },
       plugins: [
         {
           name: 'reload',
