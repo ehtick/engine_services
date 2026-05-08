@@ -7,8 +7,8 @@
 import type * as OBC from '@thatopen/components';
 import type * as BUI from '@thatopen/ui';
 import type * as THREE from 'three';
-type DataSet<_A = any, _B = any, _C = any, _D = any> = any;
-import type { EngineServicesClient, ProjectData } from '../';
+type DataMap<_A = any, _B = any, _C = any, _D = any> = any;
+import type { EngineServicesClient, Item, ProjectData } from '../';
 
 export type ComponentSetup = (components: OBC.Components) => Promise<void> | void;
 export type ComponentSetups = {
@@ -119,6 +119,115 @@ export type AppManager = InstanceType<typeof _AppManager>;
 export const AppManager = { uuid: '2e32d873-02c9-421c-8743-d8a5ca6ad38a' } as typeof _AppManager & { uuid: '2e32d873-02c9-421c-8743-d8a5ca6ad38a' };
 
 /**
+ * Which action buttons to expose per file row. All default to `true`.
+ */
+export interface FileListActions {
+    download?: boolean;
+    rename?: boolean;
+    delete?: boolean;
+}
+/**
+ * Config passed to {@link FileList.create}.
+ */
+export interface FileListConfig {
+    /** Services client used to list and mutate files. */
+    client: EngineServicesClient;
+    /** Optional folder ID to scope the list. If omitted, lists root files. */
+    folderId?: string;
+    /** Which action buttons to show per row. Defaults to all enabled. */
+    actions?: FileListActions;
+    /** Called when a file row is clicked (not an action button). */
+    onFileClick?: (file: Item) => void;
+}
+/**
+ * The result returned by {@link FileList.create}.
+ */
+export interface FileListInstance {
+    /** The DOM element to mount somewhere in your layout. */
+    element: HTMLElement;
+    /** Reloads the list from the services client. */
+    refresh: () => Promise<void>;
+    /** Changes the folder scope and reloads. Pass `undefined` for the root. */
+    setFolder: (folderId?: string) => Promise<void>;
+    /** Removes the element and forgets the instance. */
+    dispose: () => void;
+}
+
+/**
+ * Built-in component that renders a file list backed by the services client,
+ * with built-in download / rename / delete actions.
+ *
+ * The backing data comes from {@link EngineServicesClient.listFiles}, so the
+ * list stays in sync with the storage service. Each call to {@link create}
+ * returns an independent instance with its own DOM element.
+ *
+ * @example
+ * ```ts
+ * const fileList = components.get(FileList);
+ * const { element, refresh } = fileList.create({
+ *   client: app.client,
+ *   folderId: someFolderId,
+ * });
+ * container.appendChild(element);
+ * ```
+ */
+declare class _FileList extends OBC.Component {
+    static readonly uuid: "b0b5e2a2-0b3a-4a6b-8b1c-0b1c4a6b8b1c";
+    enabled: boolean;
+    readonly name = "FileList";
+    private _instances;
+    /**
+     * Creates a new file-list instance. Returns the DOM element to mount plus a
+     * `refresh` handle to reload the list, a `setFolder` to change scope, and a
+     * `dispose` to remove it.
+     */
+    create(config: FileListConfig): FileListInstance;
+    /**
+     * Removes every instance this manager has created.
+     */
+    dispose(): void;
+}
+
+/**
+ * Built-in component that renders a file list backed by the services client,
+ * with built-in download / rename / delete actions.
+ *
+ * The backing data comes from {@link EngineServicesClient.listFiles}, so the
+ * list stays in sync with the storage service. Each call to {@link create}
+ * returns an independent instance with its own DOM element.
+ *
+ * @example
+ * ```ts
+ * const fileList = components.get(FileList);
+ * const { element, refresh } = fileList.create({
+ *   client: app.client,
+ *   folderId: someFolderId,
+ * });
+ * container.appendChild(element);
+ * ```
+ */
+export type FileList = InstanceType<typeof _FileList>;
+/**
+ * Built-in component that renders a file list backed by the services client,
+ * with built-in download / rename / delete actions.
+ *
+ * The backing data comes from {@link EngineServicesClient.listFiles}, so the
+ * list stays in sync with the storage service. Each call to {@link create}
+ * returns an independent instance with its own DOM element.
+ *
+ * @example
+ * ```ts
+ * const fileList = components.get(FileList);
+ * const { element, refresh } = fileList.create({
+ *   client: app.client,
+ *   folderId: someFolderId,
+ * });
+ * container.appendChild(element);
+ * ```
+ */
+export const FileList = { uuid: 'b0b5e2a2-0b3a-4a6b-8b1c-0b1c4a6b8b1c' } as typeof _FileList & { uuid: 'b0b5e2a2-0b3a-4a6b-8b1c-0b1c4a6b8b1c' };
+
+/**
  * A simple test component to validate the built-in component pipeline.
  * Replace this with real components once the infrastructure is verified.
  */
@@ -149,6 +258,108 @@ export type HelloWorld = InstanceType<typeof _HelloWorld>;
  * Replace this with real components once the infrastructure is verified.
  */
 export const HelloWorld = { uuid: '2c4ae432-fc24-43e9-9783-0c960c674e96' } as typeof _HelloWorld & { uuid: '2c4ae432-fc24-43e9-9783-0c960c674e96' };
+
+/**
+ * Config passed to {@link TabbedNavigation.create}. All fields are optional.
+ */
+export interface TabbedNavigationConfig {
+    /** Hide the text labels and show only icons. Defaults to `false`. */
+    iconsOnly?: boolean;
+    /**
+     * Fallback icon used when a layout doesn't declare one in its definition.
+     * Defaults to `"mdi:view-dashboard"`.
+     */
+    fallbackIcon?: string;
+    /** Called after the user switches to a different layout via the tabs. */
+    onLayoutChange?: (layoutName: string) => void;
+}
+/**
+ * The result returned by {@link TabbedNavigation.create}.
+ */
+export interface TabbedNavigationInstance {
+    /** The tab-bar DOM element. Mount it inside an AppManager grid slot. */
+    element: HTMLElement;
+    /** Re-reads the grid's layouts and re-renders the tabs. Call after mutating `grid.layouts`. */
+    refresh: () => void;
+    /** Tears down listeners and removes the element. */
+    dispose: () => void;
+}
+
+/**
+ * Built-in tabbed navigation for a platform app. Renders one tab per layout
+ * declared on the `AppManager`'s grid, with the current layout highlighted.
+ * Clicking a tab switches `grid.layout`, which swaps the visible area set.
+ *
+ * This is the default top-of-app navigation pattern the platform proposes —
+ * Claude Code should use it by default when scaffolding apps with multiple
+ * layouts, instead of hand-rolling a custom tab bar.
+ *
+ * Must be called after `AppManager.init()` has mounted the grid.
+ *
+ * @example
+ * ```ts
+ * const app = components.get(AppManager<MyApp>);
+ * await app.init({ ... });
+ * const tabs = components.get(TabbedNavigation);
+ * const { element } = tabs.create();
+ * // Mount `element` in a grid area that sits above the main content.
+ * ```
+ */
+declare class _TabbedNavigation extends OBC.Component {
+    static readonly uuid: "3c2a9f34-8b6c-4d1b-8f7a-1e4a5b2c9f08";
+    enabled: boolean;
+    readonly name = "TabbedNavigation";
+    private _instances;
+    /**
+     * Creates a new tab-bar instance bound to the current `AppManager` grid.
+     */
+    create(config?: TabbedNavigationConfig): TabbedNavigationInstance;
+    /** Disposes every instance this manager has created. */
+    dispose(): void;
+}
+
+/**
+ * Built-in tabbed navigation for a platform app. Renders one tab per layout
+ * declared on the `AppManager`'s grid, with the current layout highlighted.
+ * Clicking a tab switches `grid.layout`, which swaps the visible area set.
+ *
+ * This is the default top-of-app navigation pattern the platform proposes —
+ * Claude Code should use it by default when scaffolding apps with multiple
+ * layouts, instead of hand-rolling a custom tab bar.
+ *
+ * Must be called after `AppManager.init()` has mounted the grid.
+ *
+ * @example
+ * ```ts
+ * const app = components.get(AppManager<MyApp>);
+ * await app.init({ ... });
+ * const tabs = components.get(TabbedNavigation);
+ * const { element } = tabs.create();
+ * // Mount `element` in a grid area that sits above the main content.
+ * ```
+ */
+export type TabbedNavigation = InstanceType<typeof _TabbedNavigation>;
+/**
+ * Built-in tabbed navigation for a platform app. Renders one tab per layout
+ * declared on the `AppManager`'s grid, with the current layout highlighted.
+ * Clicking a tab switches `grid.layout`, which swaps the visible area set.
+ *
+ * This is the default top-of-app navigation pattern the platform proposes —
+ * Claude Code should use it by default when scaffolding apps with multiple
+ * layouts, instead of hand-rolling a custom tab bar.
+ *
+ * Must be called after `AppManager.init()` has mounted the grid.
+ *
+ * @example
+ * ```ts
+ * const app = components.get(AppManager<MyApp>);
+ * await app.init({ ... });
+ * const tabs = components.get(TabbedNavigation);
+ * const { element } = tabs.create();
+ * // Mount `element` in a grid area that sits above the main content.
+ * ```
+ */
+export const TabbedNavigation = { uuid: '3c2a9f34-8b6c-4d1b-8f7a-1e4a5b2c9f08' } as typeof _TabbedNavigation & { uuid: '3c2a9f34-8b6c-4d1b-8f7a-1e4a5b2c9f08' };
 
 export interface ColorsPaletteState {
     components: OBC.Components;
@@ -367,13 +578,16 @@ export declare class UIDataMap<T extends UICustomShape> {
     get<K extends keyof T & string>(key: K): UIFactoryMap<T>[K];
     get(key: keyof T & string): UIFactoryMap<T>[keyof T];
 }
+export type UIFactoryInstance<TElement extends HTMLElement, TState extends Record<string, any>> = [TElement, BUI.UpdateFunction<TState>, BUI.ComponentUtils<TState>];
 export declare abstract class UIFactory<TElement extends HTMLElement, TState extends Record<string, any>> {
-    readonly instances: DataSet<[TElement, BUI.UpdateFunction<TState>, BUI.ComponentUtils<TState>]>;
+    readonly instances: DataMap<string, UIFactoryInstance<TElement, TState>>;
     abstract readonly template: BUI.StatefullComponent<TState>;
-    create(state: TState): [element: TElement, update: BUI.UpdateFunction<TState>, utils: BUI.ComponentUtils<TState>];
+    create(state: TState, options?: {
+        id?: string;
+    }): UIFactoryInstance<TElement, TState>;
     updateInstances(state?: Partial<TState>): void;
 }
-export declare function createFactory<TEl extends HTMLElement, TState extends Record<string, any>>(template: BUI.StatefullComponent<TState>, onInstanceCreated?: (item: [TEl, BUI.UpdateFunction<TState>, BUI.ComponentUtils<TState>]) => void): UIFactory<TEl, TState>;
+export declare function createFactory<TEl extends HTMLElement, TState extends Record<string, any>>(template: BUI.StatefullComponent<TState>, onInstanceCreated?: (item: UIFactoryInstance<TEl, TState>) => void): UIFactory<TEl, TState>;
 
 declare class _UIManager<TCustom extends UICustomShape = UICustomShape> extends OBC.Component {
     static readonly uuid: "234f1416-528d-452a-9cc9-a16c5239b2eb";
@@ -489,6 +703,12 @@ declare class _ViewportsManager extends OBC.Component {
      * model loading for the given world.
      */
     private _initFragments;
+    /**
+     * Grows the camera's far plane so it always encompasses every loaded
+     * model. Without this, large models clip against the default far plane
+     * and disappear from view.
+     */
+    private _expandCameraFar;
 }
 
 /**
