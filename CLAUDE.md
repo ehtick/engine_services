@@ -62,7 +62,8 @@ Examples of comment-worthy behavior:
 
 ## Template authoring
 
-- Shared files (`.gitignore`, `AGENTS.md`, `CLAUDE.md`, `tsconfig.json`, `vite.config.js`) live in `src/cli/templates/shared/` — sub-folders `app/` and `cloud/` for the variant-specific ones.
+- Truly shared files (`.gitignore`, `AGENTS.md`, `CLAUDE.md`) live in `src/cli/templates/shared/` and are copied first.
+- All other template files (`tsconfig.json`, `vite.config.js`, `index.html`, `src/`, etc.) live directly in their template folder (`app/` or `cloud-component/`) and are copied via `cpSync`.
 - Template-specific files live in their own folder and are copied on top via `cpSync`.
 - Available templates: `app` and `cloud-component`. The `TEMPLATES` constant in `src/cli/commands/create.ts` is the single source of truth.
 - Beta mode is tracked in `.thatopen` (`beta: true`). The beta ↔ stable package mapping lives in `src/cli/lib/beta.ts` — update it there only.

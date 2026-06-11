@@ -59,15 +59,9 @@ export const createCommand = new Command('create')
 
     // ── Shared files ─────────────────────────────────────────────
     const sharedDir = join(templatesDir, 'shared');
-    const sharedVariantDir = join(sharedDir, isCloud ? 'cloud' : 'app');
     copyFileSync(join(sharedDir, '_gitignore'), join(targetDir, '.gitignore'));
     copyFileSync(join(sharedDir, 'AGENTS.md'), join(targetDir, 'AGENTS.md'));
     copyFileSync(join(sharedDir, 'CLAUDE.md'), join(targetDir, 'CLAUDE.md'));
-    copyFileSync(join(sharedVariantDir, 'tsconfig.json'), join(targetDir, 'tsconfig.json'));
-    copyFileSync(join(sharedVariantDir, 'vite.config.js'), join(targetDir, 'vite.config.js'));
-    if (!isCloud) {
-      copyFileSync(join(sharedVariantDir, 'index.html'), join(targetDir, 'index.html'));
-    }
 
     // ── Template-specific files ───────────────────────────────────
     const templateDir = join(templatesDir, template);
