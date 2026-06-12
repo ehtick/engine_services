@@ -15,7 +15,7 @@
     "access": "public"
   },
   "private": false,
-  "version": "0.0.4",
+  "version": "0.0.6",
   "main": "dist/index.cjs.js",
   "module": "dist/index.es.js",
   "types": "dist/index.d.ts",
@@ -47,7 +47,8 @@
     "template:app": "cd src/cli/templates/app && npm install && cd ../../../.. && node scripts/generate-template-tsconfig.mjs",
     "template:app:dev": "cd src/cli/templates/app && npm run dev",
     "changeset": "changeset",
-    "version": "changeset version"
+    "version": "changeset version",
+    "prepublishOnly": "npm run build"
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.7",
