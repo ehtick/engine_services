@@ -1,5 +1,12 @@
 # thatopen-services
 
+## 0.1.1
+
+### Patch Changes
+
+- 15d6c25: Republish — the 0.1.0 release (which added `createHiddenFilesBatch`) failed to
+  publish to npm on an expired token. This ships that change.
+
 ## 0.1.0
 
 ### Minor Changes
