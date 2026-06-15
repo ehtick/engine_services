@@ -1,5 +1,14 @@
 # thatopen-services
 
+## 0.1.0
+
+### Minor Changes
+
+- 4568b81: Add `EngineServicesClient.createHiddenFilesBatch()` to upload many hidden files
+  in a single request, for large 3D-tile sets (point clouds / gaussian splats)
+  without hitting the per-file upload throttle. Exports the
+  `CreateHiddenItemsBatchResult` type.
+
 ## 0.18.0
 
 ### Minor Changes
