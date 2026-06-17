@@ -66,7 +66,7 @@ async function main() {
 
   // --- Archive / Recover ---
   // archiveFolder is a soft-delete — recoverable with recoverFolder.
-  // Archiving a parent does NOT archive its children automatically.
+  // Archiving a parent cascades to all children: sub-folders and their files are archived too.
   await client.archiveFolder(child._id);
   console.log(`\nArchived child folder [${child._id}]`);
 
