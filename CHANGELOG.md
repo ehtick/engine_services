@@ -1,5 +1,46 @@
 # thatopen-services
 
+## 0.2.0
+
+### Minor Changes
+
+- 30a9034: CLI: auto-configure `.npmrc` for private beta packages.
+
+  `thatopen create --beta` (and `thatopen login` inside a beta project) now fetch
+  read-only npm credentials from the platform and write a project `.npmrc`, so
+  `npm install` of the private `@thatopen-platform/*-beta` packages just works for
+  Founding members — no manual token setup. Adds
+  `EngineServicesClient.getNpmCredentials()` and exports the `NpmCredentials` type.
+
+## 0.1.3
+
+### Patch Changes
+
+- 6f845c1: Republish attempt — ship `createHiddenFilesBatch` to npm.
+
+## 0.1.2
+
+### Patch Changes
+
+- 067b1af: Republish attempt — ship `createHiddenFilesBatch` to npm now that publish
+  credentials are configured.
+
+## 0.1.1
+
+### Patch Changes
+
+- 15d6c25: Republish — the 0.1.0 release (which added `createHiddenFilesBatch`) failed to
+  publish to npm on an expired token. This ships that change.
+
+## 0.1.0
+
+### Minor Changes
+
+- 4568b81: Add `EngineServicesClient.createHiddenFilesBatch()` to upload many hidden files
+  in a single request, for large 3D-tile sets (point clouds / gaussian splats)
+  without hitting the per-file upload throttle. Exports the
+  `CreateHiddenItemsBatchResult` type.
+
 ## 0.18.0
 
 ### Minor Changes

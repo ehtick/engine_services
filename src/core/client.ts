@@ -18,10 +18,12 @@ import {
 import { CreateItemResponse, UpdateItemResponse } from '../types/response';
 import {
   CreateHiddenItemResult,
+  CreateHiddenItemsBatchResult,
   HiddenFileEntity,
   Metadata,
 } from '../types/files';
 import { ThatOpenContext } from '../types/context';
+import { NpmCredentials } from '../types/npm';
 import { RequestError } from './request-error';
 
 declare global {
@@ -34,6 +36,7 @@ declare global {
 const FOLDER_PATH = 'item/folder';
 const ITEM_PATH = 'item';
 const PROCESS_PATH = 'processor';
+const NPM_REGISTRY_PATH = 'npm-registry';
 const HIDDEN_PATH = 'hidden';
 const ITEM_TYPE_FILE = 'FILE';
 const ITEM_TYPE_COMPONENT = 'TOOL';
@@ -1011,6 +1014,23 @@ export class EngineServicesClient {
     return await this.#requestApi<AppItem>('DELETE', `${ITEM_PATH}/${appId}`);
   }
 
+  // ─── NPM Registry ────────────────────────────────────────────────
+
+  /**
+   * Fetches read-only npm credentials for the private `@thatopen` Founders
+   * beta packages. Gated server-side on the token owner's membership tier:
+   * FOUNDING members (and admins) get the token; everyone else gets a 403
+   * (`RequestError` with `status === 403`). The returned `npmrc` is a
+   * ready-to-write `.npmrc` body the CLI drops into a scaffolded project.
+   * @returns The registry, scope, read-only token, and assembled `.npmrc`.
+   */
+  async getNpmCredentials() {
+    return await this.#requestApi<NpmCredentials>(
+      'GET',
+      `${NPM_REGISTRY_PATH}/credentials`,
+    );
+  }
+
   // ─── Execution ───────────────────────────────────────────────────
 
   /**
@@ -1175,6 +1195,30 @@ export class EngineServicesClient {
     return await this.#requestApi<CreateHiddenItemResult>(
       'POST',
       `${ITEM_PATH}/${HIDDEN_PATH}`,
+      {
+        body: formData,
+      },
+    );
+  }
+
+  /**
+   * Creates many hidden files attached to a parent item in a single request.
+   * Use this instead of many `createHiddenFile` calls when uploading large sets
+   * (e.g. 3D Tiles); upload in chunks of up to 100 files per call.
+   * @param files - The files to upload.
+   * @param parentFileId - The parent item's unique identifier.
+   * @returns One result per uploaded file, in order, each with its hidden file ID.
+   */
+  async createHiddenFilesBatch(files: (File | Blob)[], parentFileId: string) {
+    const formData = new FormData();
+    for (const file of files) {
+      formData.append('files', file);
+    }
+    formData.append('parentItemId', parentFileId);
+
+    return await this.#requestApi<CreateHiddenItemsBatchResult>(
+      'POST',
+      `${ITEM_PATH}/${HIDDEN_PATH}/batch`,
       {
         body: formData,
       },

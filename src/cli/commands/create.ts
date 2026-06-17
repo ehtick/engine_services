@@ -4,6 +4,7 @@ import { basename, join, resolve } from 'node:path';
 import { execSync } from 'node:child_process';
 import { updateLocalConfig } from '../lib/config';
 import { BETA_ALIASES } from '../lib/beta';
+import { configureBetaNpmrc } from '../lib/npmrc';
 
 const TEMPLATES = ['app', 'cloud-component'] as const;
 type Template = (typeof TEMPLATES)[number];
@@ -93,12 +94,14 @@ export const createCommand = new Command('create')
       updateLocalConfig({ beta: true }, targetDir);
     }
 
+    // ── Beta: authenticate private installs via .npmrc ───────────
+    if (opts.beta) {
+      await configureBetaNpmrc(targetDir);
+    }
+
     // Install dependencies automatically
     console.log('');
     console.log('Installing dependencies...');
-    if (opts.beta) {
-      console.log('(Beta packages are private — if this fails with 401/403, configure your beta npm token.)');
-    }
     try {
       execSync('npm install', { cwd: targetDir, stdio: 'inherit' });
     } catch {
