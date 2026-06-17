@@ -149,9 +149,9 @@ app.addEventListener("top:files-dropped", (e) => {
   loadedCount += supported.length;
 });
 
-// thatopen:app-ready fires after all waitUntil promises resolve.
+// top:app-ready fires after all waitUntil promises resolve.
 // e.detail.app is a reference to the top-app element itself.
-app.addEventListener("thatopen:app-ready", (e) => {
+app.addEventListener("top:app-ready", (e) => {
   const { app: readyApp } = (e as AppReadyEvent).detail;
   readyApp.showToast("App ready", "success");
 });

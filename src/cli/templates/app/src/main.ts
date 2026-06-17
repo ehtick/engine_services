@@ -44,7 +44,7 @@ async function main() {
   app.base = "viewer";
   app.layout = "main";
 
-  app.addEventListener("thatopen:app-ready", () => {
+  app.addEventListener("top:app-ready", () => {
     app.showToast("App ready", "success");
   });
 
