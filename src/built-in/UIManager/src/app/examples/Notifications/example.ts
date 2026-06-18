@@ -1,25 +1,22 @@
 /* MD
-  ## Toasts, file drop, and cross-component notifications
+  ## Toasts and cross-component notifications
   ---
   Developers building BIM processing UIs need to surface status updates, errors,
-  and file-drop feedback to users from different points in the component tree —
-  but reaching back to the app root to trigger a notification from a deeply nested
-  component requires threading a reference through every layer in between.
+  and async feedback to users from different points in the component tree —
+  but reaching back to the app root to trigger a notification from a deeply
+  nested component requires threading a reference through every layer in between.
 
   top-app provides a built-in toast system that any descendant can trigger by
-  dispatching a standard DOM event, a drag-and-drop overlay that activates
-  automatically when files enter the window, and a drop-zone message that can be
-  computed from live state at render time rather than set once at initialization.
+  dispatching a standard DOM event. Toasts are auto-dismissed after a type-based
+  duration and stack at the bottom-left of the screen.
 
-  This tutorial covers showing a success toast when the app finishes booting;
-  building a component that dispatches notification events to report async progress
-  and completion without a reference to the root; handling dropped files, filtering
-  them by extension, and showing a warning when none are supported; and setting the
-  drop-zone message as a function that reads a live model counter.
+  This tutorial covers showing a toast on app boot via showToast; building a
+  component that dispatches top:notification to report async progress and
+  completion without a reference to the root; and using the four toast types
+  (success, error, warning, info) with their respective durations.
 
-  By the end, you'll have an app with a full notification layer — a boot
-  confirmation toast, async status reporting from a child component, and a
-  drag-and-drop zone whose message updates as models are loaded.
+  By the end, you'll have an app with a boot confirmation toast and a panel that
+  reports async work status without holding any reference to top-app.
 */
 
 import { html, LitElement } from "lit";
@@ -125,29 +122,6 @@ app.layouts = {
   },
 };
 app.layout = "main";
-
-// dropMessage as a function is called at render time so it can read live state.
-// Here it reads how many models are already loaded and adjusts the hint text.
-let loadedCount = 0;
-app.dropMessage = () =>
-  loadedCount === 0
-    ? "Drop an IFC or FRAG file to load your first model"
-    : `Drop a file to add to the ${loadedCount} loaded model${loadedCount === 1 ? "" : "s"}`;
-
-// top:files-dropped fires when the user drops files onto the window.
-// e.detail.files is a File[]. Handle upload, load, or validation here.
-app.addEventListener("top:files-dropped", (e) => {
-  const { files } = (e as CustomEvent<{ files: File[] }>).detail;
-  const supported = files.filter((f) =>
-    f.name.endsWith(".ifc") || f.name.endsWith(".frag"),
-  );
-  if (!supported.length) {
-    app.showToast("No supported files dropped", "warning");
-    return;
-  }
-  app.showToast(`Loading ${supported.length} file${supported.length === 1 ? "" : "s"}…`, "info");
-  loadedCount += supported.length;
-});
 
 // top:app-ready fires after all waitUntil promises resolve.
 // e.detail.app is a reference to the top-app element itself.

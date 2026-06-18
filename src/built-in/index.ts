@@ -5,118 +5,496 @@
  */
 
 import type * as OBC from '@thatopen/components';
-import type * as BUI from '@thatopen/ui';
-import type * as THREE from 'three';
-type DataMap<_A = any, _B = any, _C = any, _D = any> = any;
-import type { EngineServicesClient, Item, ProjectData } from '../';
+import type { EngineServicesClient, Item, ItemFolder, ItemVersion, PlatformClient } from '../';
 
-export type ComponentSetup = (components: OBC.Components) => Promise<void> | void;
-export type ComponentSetups = {
-    core?: ComponentSetup[];
-    lazy?: {
-        uuid: string;
-        fn: ComponentSetup;
+export interface CDEContext {
+    client: PlatformClient;
+    projectId: string;
+}
+export interface CDEUserPermissions {
+    canRead: boolean;
+    canCreate: boolean;
+    canUpdate: boolean;
+    canDelete: boolean;
+    canManage: boolean;
+}
+export type CDEMetadataValue = string | number | boolean | null;
+export interface CDENamingSegment {
+    key: string;
+    config?: {
+        transform: (value: CDEMetadataValue) => string;
+    };
+}
+export interface CDENamingSchema {
+    separator: string;
+    segments: CDENamingSegment[];
+}
+export interface CDEFile extends Omit<Item, 'creatingUser'> {
+    createdBy: string;
+    metadata: Record<string, CDEMetadataValue>;
+    versions?: ItemVersion[];
+    /** Tag of the file's current version (set by CDEManager from the loaded version). */
+    versionTag?: string;
+}
+export interface CDEMetadataField {
+    type: "string" | "number" | "boolean" | "list";
+    description?: string;
+    required?: boolean;
+    label: string;
+    icon?: string;
+    options?: {
+        value: string | number | boolean;
+        label: string;
     }[];
-};
-/**
- * Application-level configuration passed to {@link AppManager} as a generic.
- * Define this interface in your app to get typed access to icons and the grid.
- * - `icons`: tuple of icon key names (e.g. `["SAVE", "DELETE"]`).
- * - `grid`: the exact `BUI.Grid` type this app will use (e.g. `BUI.Grid<["Split", "Viewer"], [...]>`).
- */
-export interface App {
-    icons?: readonly string[];
-    grid?: BUI.Grid<any, any>;
 }
-/** Derives a `Record<K, string>` from the icon keys tuple in `TApp`. */
-export type IconsOf<TApp extends App> = TApp['icons'] extends readonly (infer K extends string)[] ? Record<K, string> : undefined;
-/** Extracts the grid type from `TApp`, falling back to the base `BUI.Grid`. */
-export type AppGrid<TApp extends App> = TApp['grid'] extends BUI.Grid<any, any> ? TApp['grid'] : BUI.Grid<any, any>;
-/** Config object passed to {@link AppManager.init}. */
-export type AppInitConfig<TApp extends App> = {
-    client?: EngineServicesClient;
-    icons: IconsOf<TApp>;
-    componentSetups?: ComponentSetups;
-    grid: (grid: AppGrid<TApp>) => void;
-    container?: HTMLElement;
+export type CDEMetadataSchema = Record<string, CDEMetadataField>;
+export interface CDEFileActivity {
+    user: string;
+    action: string;
+    timestamp: string;
+}
+export interface CDEFileHistoryEntry {
+    fileId: string;
+    activity: CDEFileActivity[];
+}
+export interface CDEMetadataView {
+    id: string;
+    name: string;
+    fields: string[];
+}
+export type CDEPendingMetadata = Record<string, CDEMetadataValue>;
+export type CDEPendingMetadataSchemaEdits = Record<string, CDEMetadataField | null>;
+export type FolderPendingChange = {
+    kind: "create";
+    tempId: string;
+    name: string;
+    parentId: string | null;
+} | {
+    kind: "rename";
+    folderId: string;
+    name: string;
+} | {
+    kind: "archive";
+    folderId: string;
+};
+export type FolderPendingChanges = FolderPendingChange[];
+export type CDEViewFileStatus = "loading" | "ready" | "failed" | "cancelled";
+export type CDEMachineState = {
+    kind: "idle";
+} | {
+    kind: "loading";
+} | {
+    kind: "uploading";
+} | {
+    kind: "preparing";
+    files: CDEFile[];
+} | {
+    kind: "selected";
+    files: CDEFile[];
+} | {
+    kind: "viewing";
+    files: CDEFile[];
+    fileStatus: Record<string, CDEViewFileStatus>;
+    selectedFiles?: CDEFile[];
+} | {
+    kind: "editing";
+    files: CDEFile[];
+    pendingMetadata: CDEPendingMetadata;
+} | {
+    kind: "saving";
+    files: CDEFile[];
+    pendingMetadata: CDEPendingMetadata;
+} | {
+    kind: "deleting";
+    files: CDEFile[];
+} | {
+    kind: "configuringMetadataSchema";
+    pendingEdits: CDEPendingMetadataSchemaEdits;
+} | {
+    kind: "savingMetadataSchema";
+    pendingEdits: CDEPendingMetadataSchemaEdits;
+} | {
+    kind: "configuringMetadataViews";
+    pendingViews: CDEMetadataView[];
+} | {
+    kind: "savingMetadataViews";
+    pendingViews: CDEMetadataView[];
+} | {
+    kind: "dragging";
+    files: CDEFile[];
+    sourceFolderId: string | null;
+    previousState: CDEMachineState;
+} | {
+    kind: "movingFiles";
+    files: CDEFile[];
+    targetFolderId: string;
+} | {
+    kind: "draggingFolder";
+    folderId: string;
+    parentFolderId: string | null;
+    previousState: CDEMachineState;
+} | {
+    kind: "movingFolder";
+    folderId: string;
+    targetFolderId: string | null;
+} | {
+    kind: "editingFolders";
+    pendingChanges: FolderPendingChanges;
+} | {
+    kind: "savingFolderChanges";
+    pendingChanges: FolderPendingChanges;
+} | {
+    kind: "editingFiles";
+    pendingEdits: Record<string, Record<string, CDEMetadataValue>>;
+    pendingArchives: string[];
+    pendingRenames: Record<string, string>;
+    previousState: {
+        kind: "idle";
+    } | {
+        kind: "selected";
+        files: CDEFile[];
+    };
+} | {
+    kind: "savingFiles";
+    pendingEdits: Record<string, Record<string, CDEMetadataValue>>;
+    pendingArchives: string[];
+    pendingRenames: Record<string, string>;
+    previousState: {
+        kind: "idle";
+    } | {
+        kind: "selected";
+        files: CDEFile[];
+    };
+} | {
+    kind: "error";
+    reason: string;
+    previous: CDEMachineState;
+};
+export type CDEMachineEvent = {
+    type: "LOAD";
+} | {
+    type: "UPLOAD";
+} | {
+    type: "DOWNLOAD";
+} | {
+    type: "SELECT";
+    files: CDEFile[];
+} | {
+    type: "DESELECT";
+} | {
+    type: "VIEW";
+} | {
+    type: "ADD_TO_VIEW";
+    file: CDEFile;
+} | {
+    type: "REMOVE_FROM_VIEW";
+    fileId: string;
+} | {
+    type: "CLOSE_VIEW";
+} | {
+    type: "SET_VIEW_FILE_STATUS";
+    fileId: string;
+    status: CDEViewFileStatus;
+} | {
+    type: "START_EDIT";
+} | {
+    type: "UPDATE_METADATA";
+    key: string;
+    value: CDEMetadataValue;
+} | {
+    type: "SAVE";
+} | {
+    type: "CANCEL_EDIT";
+} | {
+    type: "ARCHIVE_FILE";
+} | {
+    type: "START_CONFIGURE_METADATA_SCHEMA";
+} | {
+    type: "ADD_METADATA_FIELD";
+} | {
+    type: "UPDATE_METADATA_FIELD";
+    key: string;
+    value: CDEMetadataField;
+} | {
+    type: "DELETE_METADATA_FIELD";
+    key: string;
+} | {
+    type: "RESTORE_METADATA_FIELD";
+    key: string;
+} | {
+    type: "SAVE_METADATA_SCHEMA";
+} | {
+    type: "CANCEL_CONFIGURE_METADATA_SCHEMA";
+} | {
+    type: "START_DRAG";
+    files: CDEFile[];
+    sourceFolderId: string | null;
+} | {
+    type: "END_DRAG";
+} | {
+    type: "DROP_FILES";
+    targetFolderId: string | null;
+} | {
+    type: "START_FOLDER_DRAG";
+    folderId: string;
+    parentFolderId: string | null;
+} | {
+    type: "END_FOLDER_DRAG";
+} | {
+    type: "DROP_FOLDER";
+    targetFolderId: string | null;
+} | {
+    type: "START_EDIT_FILES";
+} | {
+    type: "UPDATE_FILE_METADATA";
+    fileId: string;
+    key: string;
+    value: CDEMetadataValue;
+} | {
+    type: "REVERT_FILE_METADATA";
+    fileId: string;
+} | {
+    type: "ARCHIVE_FILE_EDIT";
+    fileId: string;
+} | {
+    type: "UNARCHIVE_FILE_EDIT";
+    fileId: string;
+} | {
+    type: "RENAME_FILE";
+    fileId: string;
+    name: string;
+} | {
+    type: "RENAME_FILE_IMMEDIATE";
+    fileId: string;
+    name: string;
+} | {
+    type: "SAVE_FILE_EDITS";
+} | {
+    type: "CANCEL_EDIT_FILES";
+} | {
+    type: "START_EDIT_FOLDERS";
+} | {
+    type: "ADD_FOLDER";
+    tempId: string;
+    name: string;
+    parentId: string | null;
+} | {
+    type: "RENAME_FOLDER";
+    folderId: string;
+    name: string;
+} | {
+    type: "ARCHIVE_FOLDER";
+    folderId: string;
+} | {
+    type: "SAVE_FOLDER_CHANGES";
+} | {
+    type: "CANCEL_FOLDER_CHANGES";
+} | {
+    type: "RESET_FOLDER";
+    folderId: string;
+} | {
+    type: "START_CONFIGURE_METADATA_VIEWS";
+} | {
+    type: "ADD_METADATA_VIEW";
+} | {
+    type: "UPDATE_METADATA_VIEW";
+    id: string;
+    view: CDEMetadataView;
+} | {
+    type: "DELETE_METADATA_VIEW";
+    id: string;
+} | {
+    type: "SAVE_METADATA_VIEWS";
+} | {
+    type: "CANCEL_CONFIGURE_METADATA_VIEWS";
+} | {
+    type: "SET_ACTIVE_METADATA_VIEW";
+    id: string | null;
+} | {
+    type: "SET_GROUPS_VIEW_MODE";
+    mode: "groups" | "metadata";
+} | {
+    type: "FAIL";
+    reason: string;
+} | {
+    type: "DISMISS";
 };
 
-export declare const SIDEBAR_STORAGE_KEY = "thatopen-sidebar-collapsed";
-export interface SidebarState {
-    grid: BUI.Grid<any, any>;
-    collapsed: boolean;
-}
-export declare const sidebarTemplate: BUI.StatefullComponent<SidebarState>;
-
-/**
- * Built-in component that structures a ThatOpen Platform application.
- *
- * AppManager creates the app shell: a content grid with named element
- * slots arranged by CSS grid layouts, and an optional sidebar that lets
- * the user switch between layouts.
- *
- * Usage:
- * 1. Call {@link init} with icons, a grid configuration callback, and an optional container.
- * 2. Optionally set {@link showSidebar} at any point after init.
- */
-declare class _AppManager<TApp extends App = App> extends OBC.Component {
-    static readonly uuid: "2e32d873-02c9-421c-8743-d8a5ca6ad38a";
+declare class _CDEManager extends OBC.Component implements OBC.Transitionable<CDEMachineState, CDEMachineEvent> {
+    static readonly uuid: "a3f82c1d-5b74-4e9a-bc30-d7e12f894a61";
+    readonly onFilesChanged: OBC.Event<CDEFile[]>;
+    readonly onFoldersChanged: OBC.Event<ItemFolder[]>;
+    readonly onPermissionsChanged: OBC.Event<CDEUserPermissions>;
+    readonly onSelectedGroupChanged: OBC.Event<string | null>;
+    readonly onMachineStateChanged: OBC.Event<CDEMachineState>;
+    readonly onMetadataViewsChanged: OBC.Event<CDEMetadataView[]>;
+    readonly onGroupsViewModeChanged: OBC.Event<"metadata" | "groups">;
+    readonly onMetadataGroupChanged: OBC.Event<Record<string, string> | null>;
+    readonly onDownloadReady: OBC.Event<{
+        blob: Blob;
+        filename: string;
+    }>;
+    readonly onUploadCompleted: OBC.Event<{
+        created: CDEFile[];
+        versioned: CDEFile[];
+    }>;
+    readonly onFolderChangesCompleted: OBC.Event<{
+        created: number;
+        renamed: number;
+        archived: number;
+    }>;
+    readonly onFilesMovedCompleted: OBC.Event<{
+        files: CDEFile[];
+        targetFolderName: string | null;
+    }>;
+    readonly onRenameCompleted: OBC.Event<{
+        success: boolean;
+        error?: string;
+    }>;
+    readonly onFolderMovedCompleted: OBC.Event<{
+        folderName: string;
+        targetFolderName: string | null;
+    }>;
+    readonly onShowArchivedChanged: OBC.Event<boolean>;
+    readonly onRestoreCompleted: OBC.Event<{
+        files?: CDEFile[];
+        folder?: ItemFolder;
+    }>;
     enabled: boolean;
-    private _icons;
-    private _iconsSet;
-    private _grid;
-    private _initialized;
-    private _sidebar;
-    private _client;
-    private _projectData;
-    private _lazySetups;
-    get icons(): IconsOf<TApp>;
-    /**
-     * The underlying `<bim-grid>` element.
-     * Available after {@link init} has been called.
-     */
-    get grid(): AppGrid<TApp> | null;
-    get client(): EngineServicesClient;
-    get projectData(): ProjectData;
-    /**
-     * Shows or hides the layout-switching sidebar.
-     * Can be set at any point after {@link init} has been called.
-     */
-    get showSidebar(): boolean;
-    set showSidebar(value: boolean);
-    /**
-     * Initialise the app: resolve client context, process icons, mount the DOM, and invoke the grid configuration callback.
-     */
-    init(config: AppInitConfig<TApp>): Promise<void>;
-    addSetup(uuid: string, fn: ComponentSetup): void;
-    private _registerLazySetup;
-    private injectStyles;
+    projectName: string;
+    missingMetadataPlaceholder: string;
+    availableColumns: Set<string>;
+    visibleColumns: Set<string>;
+    ctx?: CDEContext;
+    private _machineState;
+    private _showArchived;
+    private _preArchivedViewMode;
+    private _archivedFiles;
+    private _archivedFolders;
+    private _archivedLoaded;
+    viewerGroups: {
+        extensions: string[];
+        multiple?: boolean;
+    }[];
+    get viewableExtensions(): Set<string>;
+    private _files;
+    private _folders;
+    private _fileHistory;
+    private _metadataSchema;
+    private _metadataViews;
+    private _activeMetadataViewId;
+    private _groupsViewMode;
+    private _selectedGroup;
+    private _selectedMetadataGroup;
+    private _namingSchema;
+    cacheMaxBytes: number;
+    cacheExtensions: Set<string>;
+    private _fileCache;
+    private _fileCacheBytes;
+    private _dedup;
+    private _cacheKey;
+    private _isCacheable;
+    private _addToCache;
+    downloadFile(file: CDEFile): Promise<ArrayBuffer>;
+    private _permissions;
+    private _projectDataFolderId;
+    private _appFolderIds;
+    private _excludedFolderIds;
+    private _projectMembers;
+    get projectMembers(): {
+        fullName: string;
+        email: string;
+        role: string;
+    }[];
+    get userPermissions(): CDEUserPermissions;
+    query: string | null;
+    get machineState(): CDEMachineState;
+    get files(): CDEFile[];
+    set files(value: CDEFile[]);
+    get folders(): ItemFolder[];
+    set folders(value: ItemFolder[]);
+    get showArchived(): boolean;
+    set showArchived(value: boolean);
+    get fileHistory(): CDEFileHistoryEntry[];
+    set fileHistory(value: CDEFileHistoryEntry[]);
+    get metadataSchema(): CDEMetadataSchema;
+    set metadataSchema(value: CDEMetadataSchema);
+    get selectedGroup(): string | null;
+    set selectedGroup(value: string | null);
+    get metadataViews(): CDEMetadataView[];
+    get activeMetadataViewId(): string | null;
+    get activeMetadataView(): CDEMetadataView | null;
+    get groupsViewMode(): "groups" | "metadata";
+    get selectedMetadataGroup(): Record<string, string> | null;
+    set selectedMetadataGroup(value: Record<string, string> | null);
+    get visibleFiles(): CDEFile[];
+    get namingSchema(): CDENamingSchema | null;
+    constructor(components: OBC.Components);
+    hasViewer(extension: string): boolean;
+    private _groupOf;
+    private _sameGroup;
+    canView(files: CDEFile[]): boolean;
+    canAddToView(files: CDEFile[]): boolean;
+    setNamingSchema(schema: CDENamingSchema): void;
+    buildFileName(file: CDEFile): string;
+    getSelectedFiles(): CDEFile[];
+    getActivity(fileId: string): CDEFileActivity[];
+    updateFilesMetadata(fileIds: string[], updates: Record<string, string>): Promise<void>;
+    readProjectData(app: string, filename: string): Promise<any>;
+    writeProjectData(app: string, filename: string, data: unknown): Promise<string>;
+    private _ensureProjectDataFolder;
+    private _ensureAppFolder;
+    private _loadPermissions;
+    loadFolders(): Promise<void>;
+    createFolder(name: string, parentId?: string): Promise<ItemFolder>;
+    getUserId(): Promise<string | undefined>;
+    loadUserConfig(): Promise<{
+        visibleColumns?: string[];
+        metadataViews?: CDEMetadataView[];
+    } | null>;
+    saveUserConfig(config: {
+        visibleColumns?: string[];
+        metadataViews?: CDEMetadataView[];
+    }): Promise<string | undefined>;
+    loadMetadataSchema(): Promise<void>;
+    initMetadataViews(views: CDEMetadataView[], activeId: string | null): void;
+    loadArchivedItems(): Promise<void>;
+    restoreFiles(files: CDEFile[]): Promise<void>;
+    restoreFolder(folderId: string): Promise<void>;
+    detectConflicts(files: File[]): {
+        file: File;
+        existing: CDEFile;
+    }[];
+    checkMoveConflicts(files: CDEFile[], targetFolderId: string | null): {
+        file: CDEFile;
+        existing: CDEFile;
+    }[];
+    uploadFiles(files: File[], folderId?: string | null, options?: {
+        forceNew?: boolean;
+    }): Promise<void>;
+    sendMachineEvent(event: CDEMachineEvent): void;
+    private _transition;
+    private _getAllArchivedIds;
+    private _collectTempDescendants;
+    private _saveFolderChanges;
+    private _moveFolder;
+    moveFiles(files: CDEFile[], targetFolderId: string | null): Promise<void>;
+    private _moveFiles;
+    private _resolveFullName;
+    private _prepareDownload;
+    private _saveMetadataSchema;
+    private _resolveKeys;
+    private _saveFileMetadata;
+    private _renameFileImmediate;
+    private _saveFileEdits;
+    private _applyMetadataEdits;
+    private _applyMetadataSchemaEdits;
+    private _saveMetadataViews;
+    private _archiveFiles;
 }
 
-/**
- * Built-in component that structures a ThatOpen Platform application.
- *
- * AppManager creates the app shell: a content grid with named element
- * slots arranged by CSS grid layouts, and an optional sidebar that lets
- * the user switch between layouts.
- *
- * Usage:
- * 1. Call {@link init} with icons, a grid configuration callback, and an optional container.
- * 2. Optionally set {@link showSidebar} at any point after init.
- */
-export type AppManager = InstanceType<typeof _AppManager>;
-/**
- * Built-in component that structures a ThatOpen Platform application.
- *
- * AppManager creates the app shell: a content grid with named element
- * slots arranged by CSS grid layouts, and an optional sidebar that lets
- * the user switch between layouts.
- *
- * Usage:
- * 1. Call {@link init} with icons, a grid configuration callback, and an optional container.
- * 2. Optionally set {@link showSidebar} at any point after init.
- */
-export const AppManager = { uuid: '2e32d873-02c9-421c-8743-d8a5ca6ad38a' } as typeof _AppManager & { uuid: '2e32d873-02c9-421c-8743-d8a5ca6ad38a' };
+export type CDEManager = InstanceType<typeof _CDEManager>;
+export const CDEManager = { uuid: 'a3f82c1d-5b74-4e9a-bc30-d7e12f894a61' } as typeof _CDEManager & { uuid: 'a3f82c1d-5b74-4e9a-bc30-d7e12f894a61' };
 
 /**
  * Which action buttons to expose per file row. All default to `true`.
@@ -259,497 +637,13 @@ export type HelloWorld = InstanceType<typeof _HelloWorld>;
  */
 export const HelloWorld = { uuid: '2c4ae432-fc24-43e9-9783-0c960c674e96' } as typeof _HelloWorld & { uuid: '2c4ae432-fc24-43e9-9783-0c960c674e96' };
 
-/**
- * Config passed to {@link TabbedNavigation.create}. All fields are optional.
- */
-export interface TabbedNavigationConfig {
-    /** Hide the text labels and show only icons. Defaults to `false`. */
-    iconsOnly?: boolean;
-    /**
-     * Fallback icon used when a layout doesn't declare one in its definition.
-     * Defaults to `"mdi:view-dashboard"`.
-     */
-    fallbackIcon?: string;
-    /** Called after the user switches to a different layout via the tabs. */
-    onLayoutChange?: (layoutName: string) => void;
-}
-/**
- * The result returned by {@link TabbedNavigation.create}.
- */
-export interface TabbedNavigationInstance {
-    /** The tab-bar DOM element. Mount it inside an AppManager grid slot. */
-    element: HTMLElement;
-    /** Re-reads the grid's layouts and re-renders the tabs. Call after mutating `grid.layouts`. */
-    refresh: () => void;
-    /** Tears down listeners and removes the element. */
-    dispose: () => void;
-}
-
-/**
- * Built-in tabbed navigation for a platform app. Renders one tab per layout
- * declared on the `AppManager`'s grid, with the current layout highlighted.
- * Clicking a tab switches `grid.layout`, which swaps the visible area set.
- *
- * This is the default top-of-app navigation pattern the platform proposes —
- * Claude Code should use it by default when scaffolding apps with multiple
- * layouts, instead of hand-rolling a custom tab bar.
- *
- * Must be called after `AppManager.init()` has mounted the grid.
- *
- * @example
- * ```ts
- * const app = components.get(AppManager<MyApp>);
- * await app.init({ ... });
- * const tabs = components.get(TabbedNavigation);
- * const { element } = tabs.create();
- * // Mount `element` in a grid area that sits above the main content.
- * ```
- */
-declare class _TabbedNavigation extends OBC.Component {
-    static readonly uuid: "3c2a9f34-8b6c-4d1b-8f7a-1e4a5b2c9f08";
-    enabled: boolean;
-    readonly name = "TabbedNavigation";
-    private _instances;
-    /**
-     * Creates a new tab-bar instance bound to the current `AppManager` grid.
-     */
-    create(config?: TabbedNavigationConfig): TabbedNavigationInstance;
-    /** Disposes every instance this manager has created. */
-    dispose(): void;
-}
-
-/**
- * Built-in tabbed navigation for a platform app. Renders one tab per layout
- * declared on the `AppManager`'s grid, with the current layout highlighted.
- * Clicking a tab switches `grid.layout`, which swaps the visible area set.
- *
- * This is the default top-of-app navigation pattern the platform proposes —
- * Claude Code should use it by default when scaffolding apps with multiple
- * layouts, instead of hand-rolling a custom tab bar.
- *
- * Must be called after `AppManager.init()` has mounted the grid.
- *
- * @example
- * ```ts
- * const app = components.get(AppManager<MyApp>);
- * await app.init({ ... });
- * const tabs = components.get(TabbedNavigation);
- * const { element } = tabs.create();
- * // Mount `element` in a grid area that sits above the main content.
- * ```
- */
-export type TabbedNavigation = InstanceType<typeof _TabbedNavigation>;
-/**
- * Built-in tabbed navigation for a platform app. Renders one tab per layout
- * declared on the `AppManager`'s grid, with the current layout highlighted.
- * Clicking a tab switches `grid.layout`, which swaps the visible area set.
- *
- * This is the default top-of-app navigation pattern the platform proposes —
- * Claude Code should use it by default when scaffolding apps with multiple
- * layouts, instead of hand-rolling a custom tab bar.
- *
- * Must be called after `AppManager.init()` has mounted the grid.
- *
- * @example
- * ```ts
- * const app = components.get(AppManager<MyApp>);
- * await app.init({ ... });
- * const tabs = components.get(TabbedNavigation);
- * const { element } = tabs.create();
- * // Mount `element` in a grid area that sits above the main content.
- * ```
- */
-export const TabbedNavigation = { uuid: '3c2a9f34-8b6c-4d1b-8f7a-1e4a5b2c9f08' } as typeof _TabbedNavigation & { uuid: '3c2a9f34-8b6c-4d1b-8f7a-1e4a5b2c9f08' };
-
-export interface ColorsPaletteState {
-    components: OBC.Components;
-    onApply: (color: string, name?: string) => void | Promise<void>;
-    defaultColors?: string[];
-    addHighlighterColors?: boolean;
-}
-export type ColorsPaletteComponent = BUI.StatefullComponent<ColorsPaletteState>;
-
-export declare const colorsPaletteTemplate: ColorsPaletteComponent;
-
-export interface LoadModelButtonState {
-    components: OBC.Components;
-    types?: {
-        ifc?: boolean;
-        fragments?: boolean;
-    };
-    onIfcProcessed?: (model: any) => void | Promise<void>;
-}
-export type LoadModelButtonComponent = BUI.StatefullComponent<LoadModelButtonState>;
-
-export declare const loadModelButtonTemplate: LoadModelButtonComponent;
-
-export type HighlightersListData = {
-    Name: string;
-    color: string;
-    Actions: string;
-};
-export interface HighlightersListState {
-    components: OBC.Components;
-    missingDataMessage?: string;
-}
-export type HighlightersListComponent = BUI.StatefullComponent<HighlightersListState>;
-
-export declare const highlightersListTemplate: HighlightersListComponent;
-export declare const onHighlightersListCreated: ([table, _, { getCurrentState }]: [BUI.Table<HighlightersListData>, BUI.UpdateFunction<HighlightersListState>, BUI.ComponentUtils<HighlightersListState>]) => void;
-
-export type ClippingsListData = {
-    Name: string;
-    Actions: string;
-    id: string;
-};
-export interface ClippingsListState {
-    components: OBC.Components;
-    missingDataMessage?: string;
-}
-export type ClippingsListComponent = BUI.StatefullComponent<ClippingsListState>;
-
-export declare const clippingsListTemplate: ClippingsListComponent;
-export declare const onClippingsListCreated: ([table, _, { getCurrentState }]: [BUI.Table<ClippingsListData>, BUI.UpdateFunction<ClippingsListState>, BUI.ComponentUtils<ClippingsListState>]) => void;
-
-export interface ScreenshotAnnotatorState {
-    components: OBC.Components;
-    blob: Blob;
-    onSend: (annotatedBlob: Blob) => Promise<void>;
-    onCancel: () => Promise<void>;
-    sendLabel?: string;
-}
-export type ScreenshotAnnotatorComponent = BUI.StatefullComponent<ScreenshotAnnotatorState>;
-
-export declare const screenshotAnnotatorTemplate: ScreenshotAnnotatorComponent;
-
-export type AreaMeasuringsListData = {
-    id: string;
-    Value: string;
-    Actions: string;
-    isTotal: boolean;
-};
-export interface AreaMeasuringsListState {
-    components: OBC.Components;
-    world: OBC.World;
-    missingDataMessage?: string;
-}
-export type AreaMeasuringsListComponent = BUI.StatefullComponent<AreaMeasuringsListState>;
-
-export declare const areaMeasuringsListTemplate: AreaMeasuringsListComponent;
-export declare const onAreaMeasuringsListCreated: ([table, _, { getCurrentState }]: [BUI.Table<AreaMeasuringsListData>, BUI.UpdateFunction<AreaMeasuringsListState>, BUI.ComponentUtils<AreaMeasuringsListState>]) => void;
-
-export type ClassificationsListData = {
-    Name: string;
-    modelIdMap: string;
-    Actions: string;
-};
-export interface ClassificationsListState {
-    components: OBC.Components;
-    missingDataMessage?: string;
-}
-export type ClassificationsListComponent = BUI.StatefullComponent<ClassificationsListState>;
-
-export declare const classificationsListTemplate: ClassificationsListComponent;
-export declare const onClassificationsListCreated: ([table, _, { getCurrentState }]: [BUI.Table<ClassificationsListData>, BUI.UpdateFunction<ClassificationsListState>, BUI.ComponentUtils<ClassificationsListState>]) => void;
-
-export type LengthMeasuringsListData = {
-    id: string;
-    Value: string;
-    Actions: string;
-    isTotal: boolean;
-};
-export interface LengthMeasuringsListState {
-    components: OBC.Components;
-    world: OBC.World;
-    missingDataMessage?: string;
-}
-export type LengthMeasuringsListComponent = BUI.StatefullComponent<LengthMeasuringsListState>;
-
-export declare const lengthMeasuringsListTemplate: LengthMeasuringsListComponent;
-export declare const onLengthMeasuringsListCreated: ([table, _, { getCurrentState }]: [BUI.Table<LengthMeasuringsListData>, BUI.UpdateFunction<LengthMeasuringsListState>, BUI.ComponentUtils<LengthMeasuringsListState>]) => void;
-
-export type QueriesHierarchyData = {
-    Name: string;
-    queries: string;
-    Actions: string;
-};
-export interface QueriesHierarchyState {
-    components: OBC.Components;
-    queryHierarchy: string[][];
-    missingDataMessage?: string;
-}
-export type QueriesHierarchyComponent = BUI.StatefullComponent<QueriesHierarchyState>;
-
-export declare const queriesHierarchyTemplate: QueriesHierarchyComponent;
-export declare const onQueriesHierarchyCreated: ([table, _, { getCurrentState }]: [BUI.Table<QueriesHierarchyData>, BUI.UpdateFunction<QueriesHierarchyState>, BUI.ComponentUtils<QueriesHierarchyState>]) => void;
-
-export interface ViewerToolbarState {
-    components: OBC.Components;
-    world: OBC.World;
-}
-export type ViewerToolbarComponent = BUI.StatefullComponent<ViewerToolbarState>;
-
-export declare const viewerToolbarTemplate: ViewerToolbarComponent;
-
-export interface ModelsDropdownState {
-    components: OBC.Components;
-    filterFn?: (modelId: string) => boolean;
-}
-export type ModelsDropdownComponent = BUI.StatefullComponent<ModelsDropdownState>;
-
-export declare const modelsDropdownTemplate: ModelsDropdownComponent;
-export declare const onModelsDropdownCreated: ([dropdown]: [BUI.Dropdown, BUI.UpdateFunction<ModelsDropdownState>, BUI.ComponentUtils<ModelsDropdownState>]) => void;
-
-export interface ModelsSectionState {
-    components: OBC.Components;
-    /** Whether to show the load-model button. Defaults to `true`. */
-    showLoadButton?: boolean;
-    /** Custom element to use as load button instead of the default. */
-    loadButton?: HTMLElement;
-}
-export type ModelsSectionComponent = BUI.StatefullComponent<ModelsSectionState>;
-export type ModelsSectionGridElement = {
-    name: "collider";
-    state: ModelsSectionState;
-};
-
-export declare const modelsSectionTemplate: ModelsSectionComponent;
-export declare const onModelsSectionCreated: ([panelSection, _, { getCurrentState }]: [BUI.PanelSection, BUI.UpdateFunction<ModelsSectionState>, BUI.ComponentUtils<ModelsSectionState>]) => void;
-
-export type UICustomShape = Record<string, {
-    type: HTMLElement;
-    state: Record<string, any>;
-}>;
-export type BuiltinShape = {
-    colorsPalette: {
-        type: HTMLDivElement;
-        state: ColorsPaletteState;
-    };
-    loadModelButton: {
-        type: BUI.Button;
-        state: LoadModelButtonState;
-    };
-    highlightersList: {
-        type: BUI.Table<HighlightersListData>;
-        state: HighlightersListState;
-    };
-    clippingsList: {
-        type: BUI.Table<ClippingsListData>;
-        state: ClippingsListState;
-    };
-    screenshotAnnotator: {
-        type: HTMLDialogElement;
-        state: ScreenshotAnnotatorState;
-    };
-    areaMeasuringsList: {
-        type: BUI.Table<AreaMeasuringsListData>;
-        state: AreaMeasuringsListState;
-    };
-    classificationsList: {
-        type: BUI.Table<ClassificationsListData>;
-        state: ClassificationsListState;
-    };
-    lengthMeasuringsList: {
-        type: BUI.Table<LengthMeasuringsListData>;
-        state: LengthMeasuringsListState;
-    };
-    queriesHierarchy: {
-        type: BUI.Table<QueriesHierarchyData>;
-        state: QueriesHierarchyState;
-    };
-    viewerToolbar: {
-        type: HTMLElement;
-        state: ViewerToolbarState;
-    };
-    modelsDropdown: {
-        type: BUI.Dropdown;
-        state: ModelsDropdownState;
-    };
-    modelsSection: {
-        type: BUI.PanelSection;
-        state: ModelsSectionState;
-    };
-};
-
-export type UIFactoryMap<T extends UICustomShape> = {
-    [K in keyof T]: UIFactory<T[K]['type'], T[K]['state']>;
-};
-export declare class UIDataMap<T extends UICustomShape> {
-    get<K extends keyof T & string>(key: K): UIFactoryMap<T>[K];
-    get(key: keyof T & string): UIFactoryMap<T>[keyof T];
-}
-export type UIFactoryInstance<TElement extends HTMLElement, TState extends Record<string, any>> = [TElement, BUI.UpdateFunction<TState>, BUI.ComponentUtils<TState>];
-export declare abstract class UIFactory<TElement extends HTMLElement, TState extends Record<string, any>> {
-    readonly instances: DataMap<string, UIFactoryInstance<TElement, TState>>;
-    abstract readonly template: BUI.StatefullComponent<TState>;
-    create(state: TState, options?: {
-        id?: string;
-    }): UIFactoryInstance<TElement, TState>;
-    updateInstances(state?: Partial<TState>): void;
-}
-export declare function createFactory<TEl extends HTMLElement, TState extends Record<string, any>>(template: BUI.StatefullComponent<TState>, onInstanceCreated?: (item: UIFactoryInstance<TEl, TState>) => void): UIFactory<TEl, TState>;
-
-declare class _UIManager<TCustom extends UICustomShape = UICustomShape> extends OBC.Component {
+declare class _UIManager extends OBC.Component {
+    #private;
     static readonly uuid: "234f1416-528d-452a-9cc9-a16c5239b2eb";
     enabled: boolean;
     readonly name = "UIManager";
-    readonly builtIn: UIDataMap<BuiltinShape>;
-    readonly custom: UIDataMap<TCustom>;
-    constructor(components: OBC.Components);
-    private registerBuiltInTemplate;
-    registerTemplate<K extends keyof TCustom & string>(name: K, config: {
-        template: BUI.StatefullComponent<TCustom[K]['state']>;
-        onInstanceCreated?: (item: [TCustom[K]['type'], BUI.UpdateFunction<TCustom[K]['state']>, BUI.ComponentUtils<TCustom[K]['state']>]) => void;
-    }): void;
+    init(): void;
 }
 
 export type UIManager = InstanceType<typeof _UIManager>;
 export const UIManager = { uuid: '234f1416-528d-452a-9cc9-a16c5239b2eb' } as typeof _UIManager & { uuid: '234f1416-528d-452a-9cc9-a16c5239b2eb' };
-
-export type ViewportFloatingGridLayouts = ['default'];
-export interface ViewportFloatingGridToolbarState {
-    components: OBC.Components;
-    world: OBC.World;
-}
-export type ViewportFloatingGridElements = [
-    {
-        name: 'top';
-        state: ViewportFloatingGridToolbarState;
-    },
-    {
-        name: 'left';
-        state: ViewportFloatingGridToolbarState;
-    },
-    {
-        name: 'right';
-        state: ViewportFloatingGridToolbarState;
-    },
-    {
-        name: 'bottom';
-        state: ViewportFloatingGridToolbarState;
-    }
-];
-export type ViewportFloatingGrid = BUI.Grid<ViewportFloatingGridLayouts, ViewportFloatingGridElements>;
-/**
- * The result of creating a viewport instance via {@link ViewportsManager.create}.
- */
-export interface ViewportInstance {
-    /** The `<bim-viewport>` HTML element to mount in a layout slot. */
-    element: BUI.Viewport;
-    /** The Three.js world bound to this viewport. */
-    world: OBC.SimpleWorld<OBC.SimpleScene, OBC.OrthoPerspectiveCamera, OBC.SimpleRenderer>;
-    floatingGrid?: ViewportFloatingGrid;
-}
-export type FloatingGridToolbars = {
-    top?: ViewportFloatingGrid['elements']['top'];
-    bottom?: ViewportFloatingGrid['elements']['bottom'];
-    left?: ViewportFloatingGrid['elements']['left'];
-    right?: ViewportFloatingGrid['elements']['right'];
-};
-/**
- * Optional configuration when creating a viewport instance.
- */
-export interface ViewportConfig {
-    /** Background color for the scene. Set to `null` for transparent. Defaults to `null`. */
-    backgroundColor?: THREE.ColorRepresentation | null;
-    /** Grid color. Defaults to `"lightgray"`. */
-    gridColor?: THREE.ColorRepresentation;
-    /** Setup for the floating grid in the viewport. Useful for toolbars. */
-    floatingToolbarsSetup?: (state: ViewportFloatingGridToolbarState) => FloatingGridToolbars;
-}
-
-/**
- * Built-in component that creates 3D viewports with a pre-configured
- * world (scene, camera, renderer) and fragments manager.
- *
- * ViewportManager is a factory: each call to {@link create} returns a
- * new independent viewport with its own world. The component tracks all
- * created instances and cleans them up on {@link dispose}.
- *
- * @example
- * ```ts
- * const viewports = components.get(ViewportManager);
- * const { element, world } = await viewports.create();
- *
- * // Use `element` as a slot in AppManager
- * app.setup = {
- *   elements: { viewer: element },
- *   layouts: { Main: { template: `"viewer" 1fr / 1fr` } },
- * };
- * ```
- */
-declare class _ViewportsManager extends OBC.Component {
-    static readonly uuid: "def81d43-6b44-4f4a-9c08-7649486112a4";
-    enabled: boolean;
-    readonly name = "ViewportManager";
-    private _instances;
-    private _fragmentsInitialized;
-    /**
-     * Creates a new viewport instance with its own world, scene, camera,
-     * and renderer. Fragments manager is initialised automatically on
-     * the first call.
-     *
-     * @param config - Optional visual configuration for the viewport.
-     * @returns A {@link ViewportInstance} containing the DOM element and world.
-     */
-    create(config?: ViewportConfig): Promise<ViewportInstance>;
-    private setupFloatingGrid;
-    /**
-     * Disposes all created viewport instances and their worlds.
-     */
-    dispose(): void;
-    /**
-     * Initialises the fragments manager if not yet done, and wires up
-     * model loading for the given world.
-     */
-    private _initFragments;
-    /**
-     * Grows the camera's far plane so it always encompasses every loaded
-     * model. Without this, large models clip against the default far plane
-     * and disappear from view.
-     */
-    private _expandCameraFar;
-}
-
-/**
- * Built-in component that creates 3D viewports with a pre-configured
- * world (scene, camera, renderer) and fragments manager.
- *
- * ViewportManager is a factory: each call to {@link create} returns a
- * new independent viewport with its own world. The component tracks all
- * created instances and cleans them up on {@link dispose}.
- *
- * @example
- * ```ts
- * const viewports = components.get(ViewportManager);
- * const { element, world } = await viewports.create();
- *
- * // Use `element` as a slot in AppManager
- * app.setup = {
- *   elements: { viewer: element },
- *   layouts: { Main: { template: `"viewer" 1fr / 1fr` } },
- * };
- * ```
- */
-export type ViewportsManager = InstanceType<typeof _ViewportsManager>;
-/**
- * Built-in component that creates 3D viewports with a pre-configured
- * world (scene, camera, renderer) and fragments manager.
- *
- * ViewportManager is a factory: each call to {@link create} returns a
- * new independent viewport with its own world. The component tracks all
- * created instances and cleans them up on {@link dispose}.
- *
- * @example
- * ```ts
- * const viewports = components.get(ViewportManager);
- * const { element, world } = await viewports.create();
- *
- * // Use `element` as a slot in AppManager
- * app.setup = {
- *   elements: { viewer: element },
- *   layouts: { Main: { template: `"viewer" 1fr / 1fr` } },
- * };
- * ```
- */
-export const ViewportsManager = { uuid: 'def81d43-6b44-4f4a-9c08-7649486112a4' } as typeof _ViewportsManager & { uuid: 'def81d43-6b44-4f4a-9c08-7649486112a4' };

@@ -36,14 +36,6 @@
     "description": "Project configuration — read, write, and reload persistent data — A CDE application needs to store two kinds of configuration: project-wide settings that all team members share (the metadata schema, custom naming rules) and personal settings that belong to one user (which columns are visible, which metadata views are pinned). Both live inside the project's file storage under a reserved system folder, so they travel with the project and don't rely on a separate configuration service."
   },
   {
-    "path": "src/built-in/FileList/example.ts",
-    "description": ""
-  },
-  {
-    "path": "src/built-in/TabbedNavigation/example.ts",
-    "description": ""
-  },
-  {
     "path": "src/built-in/UIManager/src/app/example.ts",
     "description": "top-app — Front-end developers building BIM web apps need to coordinate several async initialization steps before the UI can be shown — loading the engine, preparing fragment workers, registering loaders — and users need visible feedback on what is happening during that wait, rather than a blank screen."
   },
@@ -52,16 +44,28 @@
     "description": "Shared reactive state with AppState — Developers building interactive BIM panels often need sibling components — a filter selector and a results table, for example — to stay in sync without a shared parent. Lifting state to a common ancestor and threading it down as props works for shallow trees but becomes unwieldy as the component tree grows."
   },
   {
+    "path": "src/built-in/UIManager/src/app/examples/Banner/example.ts",
+    "description": "Persistent banners with top:banner — Some application states need a persistent, visible indicator that stays on screen until the state is explicitly cleared — an archived-files mode, a read-only permission warning, a degraded-connectivity notice. A toast auto-dismisses after a few seconds, which is wrong for these cases. A modal blocks interaction entirely, which is too heavy."
+  },
+  {
     "path": "src/built-in/UIManager/src/app/examples/Contexts/example.ts",
     "description": "Consuming platform contexts in child components — Developers building custom BIM panels need access to the 3D engine, the platform API, and the current project's metadata — but threading these objects down through props across multiple component layers forces every intermediate element to know about data it doesn't use, making trees brittle and hard to refactor."
+  },
+  {
+    "path": "src/built-in/UIManager/src/app/examples/FileDrop/example.ts",
+    "description": "File drag-and-drop with top:files-dropped — Desktop BIM workflows often rely on dragging files straight from the OS file manager onto the browser window — but wiring a document-level dragenter, dragover, dragleave, and drop handler that correctly tracks nested enter/leave counts, shows a visual overlay, and forwards the files to the right component is tedious boilerplate to repeat for every app."
   },
   {
     "path": "src/built-in/UIManager/src/app/examples/FloatingLayout/example.ts",
     "description": "Floating layout — Developers building BIM coordination tools often want the 3D model to fill the entire window while control panels float above it — but standard grid layouts give every area equal standing, shrinking the viewer into one cell and leaving visible seams between it and the panels."
   },
   {
+    "path": "src/built-in/UIManager/src/app/examples/Modal/example.ts",
+    "description": "Confirmation modals with top:modal — Destructive or irreversible actions — deleting records, overwriting files, leaving unsaved changes — should ask the user to confirm before proceeding. Opening a custom dialog element from a deeply nested component means threading a reference to a controller up through every layer of the tree."
+  },
+  {
     "path": "src/built-in/UIManager/src/app/examples/Notifications/example.ts",
-    "description": "Toasts, file drop, and cross-component notifications — Developers building BIM processing UIs need to surface status updates, errors, and file-drop feedback to users from different points in the component tree — but reaching back to the app root to trigger a notification from a deeply nested component requires threading a reference through every layer in between."
+    "description": "Toasts and cross-component notifications — Developers building BIM processing UIs need to surface status updates, errors, and async feedback to users from different points in the component tree — but reaching back to the app root to trigger a notification from a deeply nested component requires threading a reference through every layer in between."
   },
   {
     "path": "src/built-in/UIManager/src/app/examples/Sidebar/example.ts",
