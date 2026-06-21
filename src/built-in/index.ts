@@ -84,8 +84,6 @@ export type CDEMachineState = {
 } | {
     kind: "loading";
 } | {
-    kind: "uploading";
-} | {
     kind: "preparing";
     files: CDEFile[];
 } | {
@@ -360,6 +358,22 @@ declare class _CDEManager extends OBC.Component implements OBC.Transitionable<CD
         files?: CDEFile[];
         folder?: ItemFolder;
     }>;
+    readonly onUploadStarted: OBC.Event<{
+        count: number;
+    }>;
+    readonly onIfcConversionStarted: OBC.Event<{
+        file: CDEFile;
+    }>;
+    readonly onIfcConversionProgress: OBC.Event<{
+        file: CDEFile;
+        progress: number;
+    }>;
+    readonly onIfcConversionCompleted: OBC.Event<{
+        file: CDEFile;
+        success: boolean;
+        error?: string;
+    }>;
+    readonly conversionProgress: Map<string, number>;
     enabled: boolean;
     projectName: string;
     missingMetadataPlaceholder: string;
@@ -367,6 +381,7 @@ declare class _CDEManager extends OBC.Component implements OBC.Transitionable<CD
     visibleColumns: Set<string>;
     ctx?: CDEContext;
     private _machineState;
+    private _activeUploads;
     private _showArchived;
     private _preArchivedViewMode;
     private _archivedFiles;
@@ -469,6 +484,11 @@ declare class _CDEManager extends OBC.Component implements OBC.Transitionable<CD
         file: CDEFile;
         existing: CDEFile;
     }[];
+    resolveViewFile(file: CDEFile): CDEFile;
+    private _saveConversionIndex;
+    private _loadConversionIndex;
+    private _resumePendingConversions;
+    private _triggerIfcConversions;
     uploadFiles(files: File[], folderId?: string | null, options?: {
         forceNew?: boolean;
     }): Promise<void>;
