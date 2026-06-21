@@ -114,6 +114,10 @@ Builds, zips (`dist/bundle.zip`), and uploads a new version to the platform — 
 or a **component** (a component also ships its `declarations.json`). Re-run it any time to
 push a new version.
 
+Once published, it shows up at **https://platform.thatopen.com/dashboard/data** (apps under
+**Apps**, components under **Components**). It isn't running anywhere yet — to actually use
+it, **add it to one of your projects** from there.
+
 ---
 
 ## Rules for you, the assistant
