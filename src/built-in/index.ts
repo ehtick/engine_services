@@ -488,6 +488,15 @@ declare class _CDEManager extends OBC.Component implements OBC.Transitionable<CD
     private _saveConversionIndex;
     private _loadConversionIndex;
     private _resumePendingConversions;
+    /** Cached id of the IfcFragmenter component, resolved by name for this session. */
+    private _ifcFragmenterId?;
+    /**
+     * Resolves the platform IFC→FRAG cloud component's id by its stable name
+     * (`IfcFragmenter`) within the current project, so it works across dev/prod
+     * without a hardcoded id. Cached for the session. Returns `undefined` if no
+     * such component is available in the project.
+     */
+    private _resolveIfcFragmenterId;
     private _triggerIfcConversions;
     uploadFiles(files: File[], folderId?: string | null, options?: {
         forceNew?: boolean;
