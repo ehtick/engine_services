@@ -8,8 +8,8 @@ export const loginCommand = new Command('login')
   .option('--token <token>', 'Access token from the dashboard')
   .option(
     '--api-url <url>',
-    'API URL',
-    'https://dev.platform.thatopen.com',
+    'API URL (defaults to production; pass https://dev.platform.thatopen.com for the dev environment)',
+    'https://platform.thatopen.com',
   )
   .option(
     '--local',
