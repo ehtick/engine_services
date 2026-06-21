@@ -16,9 +16,15 @@ export function buildEngineScript(
   return `/* eslint-disable */
 const { EngineServicesClient } = require('@thatopen/services');
 
-const OBC = require('@thatopen/components');
-const THREE = require('three');
-let WEBIFC; try { WEBIFC = require('web-ifc'); } catch {}
+// Engine globals are BEST-EFFORT: a cloud component that doesn't touch the 3D
+// engine (e.g. one that only uses thatOpenServices) must still run. Each is
+// optional, and @thatopen/components also resolves the beta package — under
+// --beta the dep is installed as @thatopen-platform/components-beta, so a hard
+// require('@thatopen/components') would throw before main() runs.
+const tryRequire = (...names) => { for (const n of names) { try { return require(n); } catch {} } return undefined; };
+const OBC = tryRequire('@thatopen/components', '@thatopen-platform/components-beta');
+const THREE = tryRequire('three');
+const WEBIFC = tryRequire('web-ifc');
 const fs = require('fs');
 
 const executionReporter = {
