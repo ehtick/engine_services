@@ -235,7 +235,7 @@ const apiUrl = params.get("apiUrl");
 const projectId = params.get("projectId");
 
 if (accessToken && apiUrl && projectId) {
-  const { EngineServicesClient } = await import("thatopen-services");
+  const { EngineServicesClient } = await import("@thatopen/services");
   const client = new EngineServicesClient(accessToken, apiUrl);
   // Replace the mock context with the real one.
   cde.ctx = { client, projectId };

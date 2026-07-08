@@ -28,10 +28,8 @@ import * as OBC from "@thatopen/components";
 import * as OBF from "@thatopen/components-front";
 import * as FRAGS from "@thatopen/fragments";
 import * as BUI from "@thatopen/ui";
-import { PlatformClient } from "thatopen-services";
-import clashesManagerDef from "./index";
+import { PlatformClient, ClashesManager } from "@thatopen/services";
 
-const ClashesManager = clashesManagerDef.componentDefinition;
 
 const client = PlatformClient.fromPlatformContext();
 

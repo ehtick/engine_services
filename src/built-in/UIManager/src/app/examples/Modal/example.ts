@@ -27,8 +27,7 @@ import * as OBC from "@thatopen/components";
 import * as OBF from "@thatopen/components-front";
 import * as FRAGS from "@thatopen/fragments";
 import * as BUI from "@thatopen/ui";
-import { PlatformClient } from "thatopen-services";
-import uiManagerDef from "../../../../index";
+import { PlatformClient, UIManager } from "@thatopen/services";
 import type { App } from "../../index";
 
 // A child component that triggers modals without holding a reference to top-app.
@@ -120,7 +119,6 @@ class ModalActions extends LitElement {
 
 // ---- app wiring ----
 
-const UIManager = uiManagerDef.componentDefinition;
 const client = PlatformClient.fromPlatformContext();
 const { components } = (await client.setup(
   { OBC, OBF, BUI, THREE, FRAGS },

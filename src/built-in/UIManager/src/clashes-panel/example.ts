@@ -26,13 +26,9 @@ import * as OBC from "@thatopen/components";
 import * as OBF from "@thatopen/components-front";
 import * as FRAGS from "@thatopen/fragments";
 import * as BUI from "@thatopen/ui";
-import { PlatformClient } from "thatopen-services";
-import uiManagerDef from "../../../index";
-import clashesManagerDef from "../../../ClashesManager/index";
+import { PlatformClient, UIManager, ClashesManager } from "@thatopen/services";
 import type { App } from "../app/index";
 
-const UIManager      = uiManagerDef.componentDefinition;
-const ClashesManager = clashesManagerDef.componentDefinition;
 
 /* MD
   ### ✅ Prerequisites
