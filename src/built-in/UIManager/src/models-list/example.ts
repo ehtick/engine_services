@@ -1,11 +1,15 @@
 /* MD
   ## top-models-list
   ---
-  top-models-list is the project files panel: it lists the project's files, uploads new ones, converts IFC to fragments, and loads `.frag` models into the 3D scene. Its loaders are PLUGGABLE — the panel owns the UI and the orchestration (progress, refresh, association), but the HOST decides how each file format is loaded, so you can teach it new formats without forking the built-in.
+  top-models-list is the project's 3D-viewable-files tree: it mirrors the real storage folder structure, converts IFC to fragments, and loads `.frag`/`.potree`/`.splat` models into the 3D scene. Its loaders are PLUGGABLE — the panel owns the UI and the orchestration (progress, refresh, association), but the HOST decides how each extra file format is loaded, so you can teach it new formats without forking the built-in.
 
-  This tutorial covers the two extension points. First, registering a custom loader for a file extension — either imperatively with `registerLoader(ext, fn)` or up front via the `loaders` property; a loader receives `(fileId, ctx)` where `ctx` carries the engine (`components`), the platform `client`, and per-file alignment persistence. A format with no registered loader simply hides its load action. Second, overriding the IFC to fragments `converter` — omit it to use the built-in default (which drives the project's IfcFragmenter cloud component), or provide one to run conversion elsewhere.
+  This tutorial covers the two extension points. First, registering a custom loader for a file extension — either imperatively with `registerLoader(ext, fn)` or up front via the `loaders` property; a loader receives `(fileId, ctx)` where `ctx` carries the engine (`components`), the platform `client`, and per-file alignment persistence. Second, overriding the IFC to fragments `converter` — omit it to use the built-in default (which drives the project's IfcFragmenter cloud component, resolved by its stable name — see `adrs/resolve-ifc-fragmenter-by-stable-name.md`), or provide one to run conversion elsewhere.
 
-  By the end you'll have a files panel that knows how to load a custom format and how to run a custom IFC conversion, with the panel's UI untouched.
+  A behaviour worth knowing: registering a loader does NOT control whether a file shows up in the tree — the tree always mirrors the project's real storage folders, so an unrecognized file is still listed as long as it's a source (IFC/LAS/PLY) or derivative (`.frag`/`.potree`/`.splat`) extension; the loaders registry only decides whether a file's row gets a load action or none.
+
+  Known gaps (intentionally deferred, not forgotten): file upload and the base-model/auto-coordinate settings aren't ported, so `allow-upload` is currently a no-op. Everything else per-file is here, including editable attach/detach via a picker — MINUS delete, dropped on purpose. See `models-list/legacy-example.ts` + `models-list/impl.ts` for the retired implementation those gaps would be ported from.
+
+  By the end you'll have a files tree that knows how to load a custom format and how to run a custom IFC conversion, with the panel's UI untouched.
 */
 
 import { html } from "lit";
@@ -16,7 +20,7 @@ import * as FRAGS from "@thatopen/fragments";
 import * as BUI from "@thatopen/ui";
 import { PlatformClient, UIManager } from "@thatopen/services";
 import type { App } from "../app/index";
-import type { ModelsList } from "./index";
+import type { ModelsListV2 } from "./src/v2/models-list-panel";
 
 
 const client = PlatformClient.fromPlatformContext();
@@ -46,9 +50,9 @@ app.setup = (waitUntil) => {
   return { components, client };
 };
 
-// One stable <top-models-list>, kept by reference so re-rendering top-app reuses
-// it. The loaders are read LIVE, so registration can happen at any time.
-const modelsList = document.createElement("top-models-list") as ModelsList;
+// One stable <top-models-list>, kept by reference so re-rendering top-app
+// reuses it. The loaders are read LIVE, so registration can happen at any time.
+const modelsList = document.createElement("top-models-list") as ModelsListV2;
 
 // ── Extension point 1: a custom loader, keyed by file extension ──────────────
 // A ModelLoader is `(fileId, ctx) => void | Promise<void>`. The panel calls it
@@ -70,10 +74,10 @@ modelsList.registerLoader("xyz", async (fileId, ctx) => {
 // Equivalent declarative form — hand the whole registry over at once:
 //   modelsList.loaders = { xyz: async (fileId, ctx) => { ... } };
 //
-// Registering a loader for an extension is also what makes that format's files
-// APPEAR in the list (recognition follows the loaders registry). For a
-// CONVERT-style action — e.g. a PLY that runs a PLY→3D-tiles cloud component
-// then views the result — register a RICH entry so the button reads correctly:
+// Registering a loader for an extension gives its files a load action here —
+// but doesn't control visibility (see the note above). For a CONVERT-style
+// action — e.g. a PLY that runs a PLY→3D-tiles cloud component then views the
+// result — register a RICH entry so the button reads correctly:
 //   modelsList.registerLoader("ply", {
 //     label: "Generate 3D tiles",
 //     icon: "mdi:cube-scan",
