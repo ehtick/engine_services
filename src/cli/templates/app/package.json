@@ -16,7 +16,7 @@
     "@thatopen/components-front": "~3.4.0",
     "@thatopen/fragments": "~3.4.0",
     "@thatopen/services": "file:../../../..",
-    "@thatopen/ui": "~3.4.4",
+    "@thatopen/ui": "~3.4.0",
     "three": "0.185.0",
     "@sparkjsdev/spark": "^0.1.10",
     "3d-tiles-renderer": "^0.4.28",
