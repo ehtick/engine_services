@@ -27,14 +27,30 @@ when they **sync**, their changes go up and their teammates' come down. All sync
 Ask the user:
 > "What would you like to do?
 > (A) **Share** a Revit model with my team for the first time.
-> (B) **Join** a shared model a teammate already uploaded.
+> (B) **Connect** to a shared central a teammate already uploaded.
 > (C) I **already have my local open** in Revit — just sync it."
 
 Then collect the inputs for their choice (ask now — you'll need them below):
+
 - **(A) Share:** the **absolute path** to the `.rvt` to share, and a short lowercase
-  **name** for the shared central (e.g. `tower-central`).
-- **(B) Join:** the **central name** the teammate gave them.
-- **(A) and (B):** the platform **Project ID** (from the platform dashboard / project URL).
+  **name** for the shared central (e.g. `tower-central`). Also the platform **Project ID**
+  (see below). The file may or may not already be a workshared central — you'll check that
+  in Step 3; either way **the user's original file is never modified** (a copy is uploaded).
+
+- **(B) Connect:** ask the user to identify the existing central by **one** of:
+  - the **project folder id** of the central — the `revit-<name>` folder inside the
+    project's `bimterop` folder in the That Open dashboard (copy its id from the folder), **or**
+  - the **local path** to the shared central on their PC, if they already have it
+    (looks like `C:\ThatOpenShared\<project>\<name>\<file>.rvt`).
+
+  (If they already have their local *open* in Revit, that's really case **(C)** — just sync.)
+
+- **(A) — Project ID:** find it in the That Open dashboard — open the project; the ID is in
+  the project settings and the project URL. The user's token (Step 2) must belong to an
+  account with access to this project, or platform calls fail with **403** (see
+  Troubleshooting). For **(B)** the folder id / local path already encodes the project, so
+  you don't need to ask the Project ID separately.
+
 - **(C):** nothing extra — Revit must have their local open.
 
 Do **not** ask for the access token yet (that's Step 2).
@@ -105,20 +121,42 @@ thatopen login --token <TOKEN>
 
 ## Step 3 — Do the action
 
-### (A) Share a model — `publish-central`
+### (A) Share a model — `inspect`, then `publish-central`
+First check whether the file is already a workshared central:
 ```
-thatopen revit publish-central --project <PROJECT> --doc <DOC> --file "<FILE>"
+thatopen revit inspect --file "<FILE>"
 ```
-`<DOC>` is the short central name from Step 0; `<FILE>` is the `.rvt` path. This enables
-worksharing, saves it as a central, uploads it, and opens **your** local in Revit
-(takes a bit). Success: `Published. Central: … (version N).` Tell teammates to join with:
-`thatopen revit join --project <PROJECT> --doc <DOC>`.
+- **`"isCentral": true`** → it's already a central. Tell the user: *"This is already a
+  central; I'll upload a copy to the shared location — your original file won't be touched."*
+  Then publish (no `--convert` needed):
+  ```
+  thatopen revit publish-central --project <PROJECT> --doc <DOC> --file "<FILE>"
+  ```
+- **`"isCentral": false`** → it's a plain model. **Tell the user and ask for consent:**
+  *"This file isn't a shared central yet. To share it I need to turn it into one. I'll do
+  that on a COPY, so your original file stays exactly as it is. Shall I go ahead?"*
+  Only after the user agrees, publish **with `--convert`**:
+  ```
+  thatopen revit publish-central --project <PROJECT> --doc <DOC> --file "<FILE>" --convert
+  ```
 
-### (B) Join a model — `join`
+`<DOC>` is the short central name from Step 0; `<FILE>` is the `.rvt` path. Publishing saves
+the central at the shared canonical location, uploads it, and opens **your** local in Revit
+(takes a bit). Success: `Published (…). Central: … (version N). Your original file was not
+modified.` Tell teammates to connect with the **project folder id** shown in the dashboard,
+or with `thatopen revit join --project <PROJECT> --doc <DOC>`.
+
+> If you skip `inspect` and the file isn't a central, `publish-central` will refuse with a
+> message telling you to re-run with `--convert` — still ask the user first.
+
+### (B) Connect to a central — `join`
+Use whichever identifier the user gave you in Step 0:
 ```
-thatopen revit join --project <PROJECT> --doc <DOC>
+thatopen revit join --folder-id <FOLDER_ID>          # the revit-<name> folder id in the project
+thatopen revit join --path "<C:\ThatOpenShared\...\central.rvt>"   # a local shared-central path
 ```
-Downloads the central, creates the user's **local**, and opens it in Revit.
+(Advanced: `--project <PROJECT> --doc <DOC>` also works if the user knows both.)
+This downloads the central, creates the user's **local**, and opens it in Revit.
 Success: `Joined. Your local was created and opened in Revit: …`.
 
 ### (C) Already have a local open — `sync`
@@ -145,11 +183,19 @@ Success: `Synced.  vN → vM.` Repeat as often as they like; syncs are queued, n
   for a different environment than `--api-url`. Ask the user to generate a fresh token in
   the dashboard (Data → API Tokens) for the SAME environment: production tokens use **no**
   `--api-url`; dev tokens use `--api-url https://dev.platform.thatopen.com`. Then retry.
+- **publish/join fails with HTTP 403** on `item/folder?projectId=…` → login worked but the
+  user's account is **not authorized for that Project ID** (wrong project, wrong
+  environment, or no access). Confirm the Project ID with the user and that their token
+  (Step 2) belongs to an account with access to it, then retry.
 - **"add‑in not running"** after Revit is open → the add‑in isn't installed; do Step 1(b).
 - **"Could not reach the Revit add‑in"** → Revit was closed; reopen it and retry.
 - **"Not logged in"** → do Step 2.
-- **publish/join says a value is missing** → you omitted an `--option`; re‑run with all of
-  `--project`, `--doc`, and (for publish) `--file`.
+- **publish says a value is missing** → re‑run with `--project`, `--doc`, and `--file`.
+- **publish refuses: "not a workshared central … re-run with convert=true"** → the file is a
+  plain model. Ask the user for consent to convert a **copy** (original untouched), then add
+  `--convert`.
+- **`join` says "Identify the central … with one of …"** → provide `--folder-id`, or
+  `--path`, or both `--project` and `--doc`.
 
 ## Rules recap (for the AI)
 - Ask for every value you don't have — never guess a project id, file path, or central name.

@@ -28,12 +28,30 @@ revitCommand
   });
 
 revitCommand
+  .command('inspect')
+  .description('Check whether a .rvt is already a workshared central (before sharing)')
+  .requiredOption('--file <path>', 'Absolute path to the .rvt to inspect')
+  .action(async (opts: { file: string }) => {
+    await connect();
+    const r = await callAddin('inspect', { file: opts.file });
+    console.log(JSON.stringify(r, null, 2));
+    if (r.isCentral) {
+      console.log('\nThis file is already a central — you can share it as-is (a copy is uploaded; your original is untouched).');
+    } else {
+      console.log('\nThis file is NOT a central yet. To share it, it must be converted into one.');
+      console.log('Publishing works on a COPY, so your original file is never modified.');
+      console.log('Ask the user for consent, then run publish-central with --convert.');
+    }
+  });
+
+revitCommand
   .command('publish-central')
   .description('Turn a .rvt into a shared central and upload it to a project')
   .requiredOption('--project <id>', 'Platform project id')
   .requiredOption('--doc <name>', 'A short name for this central (e.g. tower-central)')
   .requiredOption('--file <path>', 'Absolute path to the source .rvt on this machine')
-  .action(async (opts: { project: string; doc: string; file: string }) => {
+  .option('--convert', 'Allow converting a non-central .rvt into one (on a copy; original untouched)')
+  .action(async (opts: { project: string; doc: string; file: string; convert?: boolean }) => {
     await connect();
     console.log(`Publishing "${opts.file}" as central "${opts.doc}"...`);
     console.log('(Revit is enabling worksharing and saving the central — this can take a bit.)');
@@ -41,25 +59,42 @@ revitCommand
       project: opts.project,
       doc: opts.doc,
       file: opts.file,
+      convert: !!opts.convert,
     });
-    console.log(`Published. Central: ${r.central} (version ${r.version}).`);
-    console.log(`Collaborators can now join with:`);
+    const how = r.wasCentral ? 'copied the existing central' : 'converted a copy into a central';
+    console.log(`Published (${how}). Central: ${r.central} (version ${r.version}).`);
+    console.log(`Your original file was not modified. Collaborators can now join with:`);
     console.log(`  thatopen revit join --project ${opts.project} --doc ${opts.doc}`);
   });
 
 revitCommand
   .command('join')
   .description('Download a shared central and create + open your local in Revit')
-  .requiredOption('--project <id>', 'Platform project id')
-  .requiredOption('--doc <name>', 'The central name to join (from whoever published it)')
-  .action(async (opts: { project: string; doc: string }) => {
-    await connect();
-    console.log(`Joining "${opts.doc}"...`);
-    const r = await callAddin('join', { project: opts.project, doc: opts.doc });
-    console.log(`Joined. Your local was created and opened in Revit:`);
-    console.log(`  ${r.local}`);
-    console.log(`Model as usual, then run "thatopen revit sync" (or the "Sync to team" button).`);
-  });
+  .option('--folder-id <id>', "The central's project folder id (the revit-<doc> folder in That Open)")
+  .option('--path <path>', 'Local path to the shared central (C:\\ThatOpenShared\\<proj>\\<doc>\\<name>.rvt)')
+  .option('--project <id>', 'Platform project id (use together with --doc)')
+  .option('--doc <name>', 'The central name to join (use together with --project)')
+  .action(
+    async (opts: { folderId?: string; path?: string; project?: string; doc?: string }) => {
+      await connect();
+      if (!opts.folderId && !opts.path && !(opts.project && opts.doc)) {
+        console.error(
+          'Identify the central to join with one of: --folder-id, --path, or --project + --doc.',
+        );
+        process.exit(1);
+      }
+      console.log('Joining...');
+      const r = await callAddin('join', {
+        folderId: opts.folderId,
+        path: opts.path,
+        project: opts.project,
+        doc: opts.doc,
+      });
+      console.log(`Joined. Your local was created and opened in Revit:`);
+      console.log(`  ${r.local}`);
+      console.log(`Model as usual, then run "thatopen revit sync" (or the "Sync to team" button).`);
+    },
+  );
 
 revitCommand
   .command('sync')
