@@ -35,13 +35,15 @@ All syncs are automatically **queued**, so the central never conflicts or diverg
 3. **Revit 2026 is open** on this machine. Ask the user to confirm.
 4. **The That Open Revit add‑in is installed.** Ask the user:
    *"Do you already have the That Open Revit add‑in installed?"*
-   - **If no / not sure:**
-     1. Download it: **https://drive.google.com/file/d/1HL_Ti7N_qN0Q-X7vNYOQst3yEgIY-xXO/view?usp=drive_link**
-     2. Unzip the folder.
-     3. Right‑click `install.ps1` → **Run with PowerShell**
+   - **If no / not sure — the plugin files ship in the SAME folder as this guide**
+     (this guide travels inside the plugin zip). Install it:
+     1. In this folder, right‑click `install.ps1` → **Run with PowerShell**
         (or run `powershell -ExecutionPolicy Bypass -File .\install.ps1`).
-     4. **Restart Revit 2026.** If Revit warns the add‑in is from an unknown publisher,
+     2. **Restart Revit 2026.** If Revit warns the add‑in is from an unknown publisher,
         choose **"Always Load"**.
+     - *If you have only this guide and not the plugin files, download the plugin zip here,
+       unzip it, and run `install.ps1`:*
+       **https://drive.google.com/file/d/1HL_Ti7N_qN0Q-X7vNYOQst3yEgIY-xXO/view?usp=drive_link**
 5. **Verify the add‑in is running** — run:
    ```
    thatopen revit status
