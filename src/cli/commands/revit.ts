@@ -105,3 +105,33 @@ revitCommand
     const r = await callAddin('sync');
     console.log(`Synced.  v${r.verB} → v${r.verA}.`);
   });
+
+revitCommand
+  .command('worksets')
+  .description('List the model worksets and who owns each')
+  .action(async () => {
+    await connect();
+    const r = await callAddin('worksets');
+    console.log(JSON.stringify(r.worksets, null, 2));
+  });
+
+revitCommand
+  .command('take')
+  .description('Take ownership of a workset (only one person at a time — the team lock arbitrates)')
+  .requiredOption('--workset <name>', 'The workset name to take')
+  .action(async (opts: { workset: string }) => {
+    await connect();
+    const r = await callAddin('take', { workset: opts.workset });
+    if (r.taken) console.log(`✓ Took workset "${r.workset}" (${r.result}). You can now edit its elements.`);
+    else console.log(`✗ Could NOT take "${r.workset}" — it is held by "${r.deniedBy}". Ask them to release it (untake).`);
+  });
+
+revitCommand
+  .command('untake')
+  .description('Release a workset you own so teammates can take it')
+  .requiredOption('--workset <name>', 'The workset name to release')
+  .action(async (opts: { workset: string }) => {
+    await connect();
+    const r = await callAddin('untake', { workset: opts.workset });
+    console.log(`Released workset "${r.released}".`);
+  });
