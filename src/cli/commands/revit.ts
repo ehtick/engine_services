@@ -4,7 +4,7 @@ import { callAddin, configureAddin } from '../lib/revit-addin';
 
 /**
  * `thatopen revit ...` — Revit collaboration commands. They drive the local
- * That Open Revit add-in (BT3): publish a shared central, join one, and sync.
+ * That Open Revit add-in (revit-flow): publish a shared central, join one, and sync.
  * Auth comes from `thatopen login` (~/.thatopen/config.json) and is forwarded to
  * the add-in, so the user never re-enters a token here.
  */

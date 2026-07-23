@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { homedir } from 'node:os';
 
 /**
- * Talks to the local That Open Revit add-in (BT3). The add-in runs a
+ * Talks to the local That Open Revit add-in (revit-flow). The add-in runs a
  * 127.0.0.1 command listener and, on startup, writes its port + token to
  * %APPDATA%\ThatOpen\revit-addin.json so the CLI can discover it. Revit-specific
  * work (create central, create local, sync) happens inside the add-in; the CLI
@@ -51,7 +51,7 @@ export async function callAddin(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-Bt3-Token': info.token,
+        'X-RevitFlow-Token': info.token,
       },
       body: JSON.stringify(body),
       signal: AbortSignal.timeout(600000),

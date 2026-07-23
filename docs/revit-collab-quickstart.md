@@ -81,7 +81,7 @@ Do **not** ask for the access token yet (that's Step 2).
 
    **(b) Revit is open but status still errors → the add‑in isn't installed. Install it:**
    - The add‑in files ship in **this same folder** as this guide (`install.ps1`,
-     `Bt3Addin.dll`, `Bt3Core.dll`, `bt3.addin`). From this folder, run:
+     `RevitFlowAddin.dll`, `RevitFlowCore.dll`, `revitflow.addin`). From this folder, run:
      ```
      powershell -ExecutionPolicy Bypass -File install.ps1
      ```
@@ -178,6 +178,52 @@ Success: `Synced.  vN → vM.` Repeat as often as they like; syncs are queued, n
 
 ---
 
+## Step 5 — Worksets (so two people don't edit the same thing)
+Syncs never corrupt the central, but if **two people edit the SAME element** without
+coordinating, the second one's sync is rejected and their local can get stuck. To avoid
+that, claim the part of the model you're about to edit using **worksets** — the unit of
+ownership. Typically one workset per area or per person (this central already has one per
+floor/level).
+
+**See the worksets and who owns each:**
+```
+thatopen revit worksets
+```
+
+**Claim a workset before editing it — two equivalent ways:**
+- **Ribbon (easiest):** in Revit's **Add-Ins → That Open** panel, select any element that
+  belongs to the workset you want, then click **"Take workset"**.
+- **CLI:**
+  ```
+  thatopen revit take --workset "<NAME>"
+  ```
+Only **one person at a time** can own a workset. If someone else already holds it, you get
+`✗ held by <user>` — coordinate or pick another. If two people click Take at the same
+instant, the platform lock gives it to exactly one and denies the other (no corruption).
+
+**⚠️ Ownership only protects you AFTER a sync round.** Taking a workset is instant for the
+*claim* (nobody else can take it), but Revit only **blocks teammates' edits** once the
+ownership reaches their copy: **you Sync (push your ownership), then each teammate Syncs
+(pulls it).** So the reliable sequence is:
+1. `thatopen revit take --workset "<NAME>"` (or the Take workset button)
+2. `thatopen revit sync`   ← you push the ownership
+3. teammates `thatopen revit sync`   ← now Revit blocks them from editing your workset
+
+Until teammates have synced, they could still auto-borrow an element in that workset by
+editing it directly. After the round, they'll see it as owned by you and be blocked.
+
+**Release when you're done** so teammates can take it:
+- **Ribbon:** click **"Release worksets"** (frees everything you own).
+- **CLI:** `thatopen revit untake --workset "<NAME>"`
+Then `sync` so the release propagates.
+
+> Note: simply editing an element makes you its **borrower** automatically (element-level);
+> **taking a workset** makes you the **owner** (workset-level). Revit only blocks editing
+> worksets owned by **someone else** — so the Take→Sync→Sync round above is what creates the
+> protection.
+
+---
+
 ## Troubleshooting
 - **`thatopen login` fails with "Unauthorized"** → the token is invalid/expired, or it's
   for a different environment than `--api-url`. Ask the user to generate a fresh token in
@@ -196,6 +242,11 @@ Success: `Synced.  vN → vM.` Repeat as often as they like; syncs are queued, n
   `--convert`.
 - **`join` says "Identify the central … with one of …"** → provide `--folder-id`, or
   `--path`, or both `--project` and `--doc`.
+- **`take` returns `✗ held by <user>`** → someone else owns that workset. Ask them to
+  Release + sync, or claim a different workset. This is expected, not an error.
+- **A teammate can still edit "my" workset** → ownership hasn't reached them yet. Make sure
+  **you synced after taking it, and they synced afterwards** (Step 5). Until both sync
+  rounds happen, Revit on their side doesn't know you own it.
 
 ## Rules recap (for the AI)
 - Ask for every value you don't have — never guess a project id, file path, or central name.

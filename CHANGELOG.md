@@ -1,5 +1,11 @@
 # thatopen-services
 
+## 0.3.15
+
+### Patch Changes
+
+- Rename the Revit add-in auth header to `X-RevitFlow-Token` (revit-flow rebrand of the former "BT3" collaboration add-in). Requires the matching revit-flow add-in build. Also updates the `revit` command/lib comments and the collaboration quickstart guide.
+
 ## 0.3.6
 
 ### Patch Changes
